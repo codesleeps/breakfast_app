@@ -1,0 +1,9 @@
+{
+  "name": "Community Breakfast",
+  "short_name": "Breakfast",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#f59e0b",
+  "icons": []
+}
