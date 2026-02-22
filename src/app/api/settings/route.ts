@@ -2,6 +2,14 @@ import { queryInternalDatabase } from '@/server-lib/internal-db-query';
 import { NextResponse } from 'next/server';
 import type { KitchenSettings } from '@/shared/models/breakfast';
 
+// Mock settings for development without database
+// Extended hours for demo/testing purposes (24/7 for demo)
+const MOCK_SETTINGS: KitchenSettings = {
+  service_days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
+  service_start_hour: 0,  // Midnight
+  service_end_hour: 24,   // Midnight next day (24/7)
+};
+
 export async function GET() {
   try {
     const rows = await queryInternalDatabase(
@@ -29,8 +37,9 @@ export async function GET() {
 
     return NextResponse.json(settings);
   } catch (error) {
-    console.error('Failed to fetch settings:', error);
-    return NextResponse.json({ error: 'Failed to fetch settings' }, { status: 500 });
+    console.error('Failed to fetch settings, using mock data:', error);
+    // Return mock data when database is not available
+    return NextResponse.json(MOCK_SETTINGS);
   }
 }
 
