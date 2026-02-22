@@ -3,11 +3,10 @@ import { NextResponse } from 'next/server';
 import type { KitchenSettings } from '@/shared/models/breakfast';
 
 // Mock settings for development without database
-// Extended hours for demo/testing purposes (24/7 for demo)
 const MOCK_SETTINGS: KitchenSettings = {
   service_days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
-  service_start_hour: 0,  // Midnight
-  service_end_hour: 24,   // Midnight next day (24/7)
+  service_start_hour: 8,   // 8am
+  service_end_hour: 13,    // 1pm
 };
 
 export async function GET() {

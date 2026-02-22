@@ -6,8 +6,16 @@ const VALID_DELIVERY_METHODS = ['delivery', 'collection'];
 const VALID_PAYMENT_METHODS = ['cash', 'card', 'donation'];
 const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
-// In-memory store for demo orders (when no database)
-const demoOrders: OrderWithItems[] = [];
+// Global in-memory store for demo orders (persists across hot reloads)
+const globalForOrders = globalThis as unknown as {
+  demoOrders: OrderWithItems[] | undefined;
+  useDemoMode: boolean | undefined;
+};
+
+const demoOrders: OrderWithItems[] = globalForOrders.demoOrders ?? [];
+globalForOrders.demoOrders = demoOrders;
+
+let useDemoMode = globalForOrders.useDemoMode ?? false;
 
 // Demo menu items (used when no database)
 const DEMO_MENU_ITEMS = new Map([
@@ -25,7 +33,17 @@ const DEMO_MENU_ITEMS = new Map([
   ['12', { id: '12', name: 'Cappuccino', price_pence: 300, available: true }],
 ]);
 
-let useDemoMode = false;
+// Check if we should use demo mode (no valid database tables)
+async function shouldUseDemoMode(): Promise<boolean> {
+  if (useDemoMode) return true;
+  try {
+    await queryInternalDatabase('SELECT 1 FROM menu_items LIMIT 1');
+    return false;
+  } catch {
+    useDemoMode = true;
+    return true;
+  }
+}
 
 async function isKitchenOpen(): Promise<{ open: boolean; message?: string }> {
   try {
@@ -136,6 +154,52 @@ export async function GET(request: Request) {
   }
 }
 
+function createDemoOrder(data: {
+  resident_name: string;
+  flat_number?: string | null;
+  delivery_method: 'delivery' | 'collection';
+  notes?: string | null;
+  payment_method: 'cash' | 'card' | 'donation';
+  items: Array<{ menu_item_id: string; quantity: number }>;
+}): OrderWithItems {
+  let totalPence = 0;
+  const orderItems: OrderItem[] = [];
+  const orderId = `demo-${Date.now()}`;
+
+  for (const item of data.items) {
+    const menuItem = DEMO_MENU_ITEMS.get(item.menu_item_id);
+    if (menuItem) {
+      totalPence += menuItem.price_pence * item.quantity;
+      orderItems.push({
+        id: `item-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        order_id: orderId,
+        menu_item_id: item.menu_item_id,
+        quantity: item.quantity,
+        item_name: menuItem.name,
+        item_price_pence: menuItem.price_pence,
+      });
+    }
+  }
+
+  const now = new Date().toISOString();
+  const orderWithItems: OrderWithItems = {
+    id: orderId,
+    resident_name: data.resident_name.trim(),
+    flat_number: data.flat_number?.trim() || null,
+    delivery_method: data.delivery_method,
+    notes: data.notes?.trim() || null,
+    status: 'pending',
+    payment_method: data.payment_method,
+    total_pence: totalPence,
+    created_at: now,
+    updated_at: now,
+    items: orderItems,
+  };
+
+  demoOrders.push(orderWithItems);
+  return orderWithItems;
+}
+
 export async function POST(request: Request) {
   const body = await request.json();
   const { resident_name, flat_number, delivery_method, notes, payment_method, items } = body;
@@ -165,7 +229,7 @@ export async function POST(request: Request) {
   }
 
   // Demo mode - create order in memory (skip kitchen hours check for demo)
-  if (useDemoMode) {
+  if (await shouldUseDemoMode()) {
     // Verify all items exist in demo menu
     for (const item of items) {
       const menuItem = DEMO_MENU_ITEMS.get(item.menu_item_id);
@@ -174,43 +238,15 @@ export async function POST(request: Request) {
       }
     }
 
-    // Calculate total
-    let totalPence = 0;
-    const orderItems: OrderItem[] = [];
-    const orderId = `demo-${Date.now()}`;
-
-    for (const item of items) {
-      const menuItem = DEMO_MENU_ITEMS.get(item.menu_item_id);
-      if (menuItem) {
-        totalPence += menuItem.price_pence * item.quantity;
-        orderItems.push({
-          id: `item-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          order_id: orderId,
-          menu_item_id: item.menu_item_id,
-          quantity: item.quantity,
-          item_name: menuItem.name,
-          item_price_pence: menuItem.price_pence,
-        });
-      }
-    }
-
-    const now = new Date().toISOString();
-    const orderWithItems: OrderWithItems = {
-      id: orderId,
-      resident_name: resident_name.trim(),
-      flat_number: flat_number?.trim() || null,
+    const order = createDemoOrder({
+      resident_name,
+      flat_number,
       delivery_method,
-      notes: notes?.trim() || null,
-      status: 'pending',
+      notes,
       payment_method,
-      total_pence: totalPence,
-      created_at: now,
-      updated_at: now,
-      items: orderItems,
-    };
-
-    demoOrders.push(orderWithItems);
-    return NextResponse.json(orderWithItems, { status: 201 });
+      items,
+    });
+    return NextResponse.json(order, { status: 201 });
   }
 
   try {
