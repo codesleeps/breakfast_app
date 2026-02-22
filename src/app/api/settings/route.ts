@@ -3,8 +3,15 @@ import { NextResponse } from 'next/server';
 import type { KitchenSettings } from '@/shared/models/breakfast';
 
 // Mock settings for development without database
+// Note: For demo purposes, kitchen is always "open" to allow testing
 const MOCK_SETTINGS: KitchenSettings = {
   service_days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
+  service_start_hour: 0,   // Midnight (allows demo testing anytime)
+  service_end_hour: 24,    // Midnight next day (allows demo testing anytime)
+};
+
+// Display hours shown to users (actual breakfast service hours)
+const DISPLAY_HOURS = {
   service_start_hour: 8,   // 8am
   service_end_hour: 13,    // 1pm
 };

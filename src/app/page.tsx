@@ -152,8 +152,9 @@ export default function HomePage() {
     );
   }
 
-  const startLabel = settings ? formatHour(settings.service_start_hour) : "8am";
-  const endLabel = settings ? formatHour(settings.service_end_hour) : "11am";
+  // Display the actual breakfast hours (8am-1pm) in the UI
+  const startLabel = "8am";
+  const endLabel = "1pm";
 
   return (
     <div className="max-w-2xl mx-auto pb-28">

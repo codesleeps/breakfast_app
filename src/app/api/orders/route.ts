@@ -15,6 +15,9 @@ const globalForOrders = globalThis as unknown as {
 const demoOrders: OrderWithItems[] = globalForOrders.demoOrders ?? [];
 globalForOrders.demoOrders = demoOrders;
 
+// Export for use in other routes (like status updates)
+export { demoOrders };
+
 let useDemoMode = globalForOrders.useDemoMode ?? false;
 
 // Demo menu items (used when no database)
