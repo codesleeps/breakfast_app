@@ -6,4 +6,7 @@ export const { GET, POST, PUT } = serve({
   client: inngest,
   functions: [exampleCron],
   logLevel: "debug",
+  ...(process.env.VERCEL_URL && {
+    serveUrl: `https://${process.env.VERCEL_URL}`,
+  }),
 });
