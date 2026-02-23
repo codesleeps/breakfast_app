@@ -16,6 +16,7 @@ export function getAuthClient() {
           name: process.env.NEXT_PUBLIC_DEV_USER_NAME,
           email: process.env.NEXT_PUBLIC_DEV_USER_EMAIL,
           image: process.env.NEXT_PUBLIC_DEV_USER_IMAGE ?? undefined,
+          phone: process.env.NEXT_PUBLIC_DEV_USER_PHONE ?? undefined,
         },
       },
     };

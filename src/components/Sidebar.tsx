@@ -1,10 +1,11 @@
 "use client";
 
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Menu } from "lucide-react";
 import Link from "next/link";
 import { authClient, getAuthActiveOrganization, getAuthClient } from "@/client-lib/auth-client";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,7 +33,7 @@ const authUrl = process.env.NEXT_PUBLIC_AUTH_URL ?? "";
 export function Sidebar() {
   const { data: session } = getAuthClient();
   const { data: activeOrganization } = getAuthActiveOrganization();
-  const { state } = useSidebar();
+  const { state, isMobile, toggleSidebar } = useSidebar();
   const handleSignOut = async () => {
     await authClient.signOut({
       fetchOptions: {
@@ -47,7 +48,14 @@ export function Sidebar() {
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center justify-between px-[2px] py-2 gap-2">
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <SidebarTrigger className="shrink-0" />
+            {isMobile ? (
+              <Button variant="ghost" size="icon" onClick={toggleSidebar} className="shrink-0">
+                <Menu className="h-4 w-4" />
+                <span className="sr-only">Toggle Menu</span>
+              </Button>
+            ) : (
+              <SidebarTrigger className="shrink-0" />
+            )}
             {state === "expanded" && (
               <span className="font-semibold text-sidebar-foreground truncate">
                 {process.env.NEXT_PUBLIC_APP_NAME || "Breakfast App"}
@@ -95,6 +103,14 @@ export function Sidebar() {
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" side="right" className="w-56">
+                  <div className="px-2 py-1.5">
+                    <p className="text-sm font-medium">{session.user.name ?? "User"}</p>
+                    <p className="text-xs text-muted-foreground">{session.user.email}</p>
+                    {"phone" in session.user && session.user.phone && (
+                      <p className="text-xs text-muted-foreground">{session.user.phone}</p>
+                    )}
+                  </div>
+                  <DropdownMenuSeparator />
                   <div className="px-2 py-1.5">
                     <p className="text-xs font-medium text-muted-foreground">Organization</p>
                     <p className="text-sm">{activeOrganization?.name ?? "No organization selected"}</p>

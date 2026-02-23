@@ -54,6 +54,9 @@ export function Topbar() {
                       {session.user.name ?? "User"}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">{session.user.email}</p>
+                    {"phone" in session.user && session.user.phone && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{session.user.phone}</p>
+                    )}
                   </div>
                   <DropdownMenuSeparator />
                   <div className="px-2 py-1.5">

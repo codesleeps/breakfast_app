@@ -2,6 +2,7 @@ import "globals.css";
 
 import { type Metadata, type Viewport } from "next";
 import { Inter } from "next/font/google";
+import { MobileHeader } from "@/components/MobileHeader";
 import { Sidebar } from "@/components/Sidebar";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -44,8 +45,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               <div className="print:hidden">
                 <Sidebar />
               </div>
+              <MobileHeader />
               <SidebarInset className="print:!ml-0 print:!p-0">
-                <main id="main-content" className="flex-1 p-4 print:p-0">{children}</main>
+                <main id="main-content" className="flex-1 p-4 pt-16 md:pt-4 print:p-0">{children}</main>
               </SidebarInset>
             </SidebarProvider>
           ) : (
