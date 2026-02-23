@@ -1,24 +1,13 @@
 import { queryInternalDatabase } from '@/server-lib/internal-db-query';
 import { NextResponse } from 'next/server';
 import type { Order, OrderItem, OrderWithItems } from '@/shared/models/breakfast';
+import { demoOrders } from '@/server-lib/demo-store';
 
 const VALID_DELIVERY_METHODS = ['delivery', 'collection'];
 const VALID_PAYMENT_METHODS = ['cash', 'card', 'donation'];
 const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
-// Global in-memory store for demo orders (persists across hot reloads)
-const globalForOrders = globalThis as unknown as {
-  demoOrders: OrderWithItems[] | undefined;
-  useDemoMode: boolean | undefined;
-};
-
-const demoOrders: OrderWithItems[] = globalForOrders.demoOrders ?? [];
-globalForOrders.demoOrders = demoOrders;
-
-// Export for use in other routes (like status updates)
-export { demoOrders };
-
-let useDemoMode = globalForOrders.useDemoMode ?? false;
+let useDemoMode = false;
 
 // Demo menu items (used when no database)
 const DEMO_MENU_ITEMS = new Map([

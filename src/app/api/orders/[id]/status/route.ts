@@ -1,6 +1,6 @@
 import { queryInternalDatabase } from '@/server-lib/internal-db-query';
 import { NextResponse } from 'next/server';
-import { demoOrders } from '../route';
+import { demoOrders } from '@/server-lib/demo-store';
 
 const VALID_STATUSES = ['pending', 'preparing', 'ready', 'delivered', 'cancelled'];
 
