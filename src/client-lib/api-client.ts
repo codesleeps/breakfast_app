@@ -67,6 +67,7 @@ export function useOrdersAhead(orderId: string | null) {
 export async function createOrder(data: {
   resident_name: string;
   flat_number?: string;
+  mobile_number?: string;
   delivery_method: string;
   notes?: string;
   payment_method: string;

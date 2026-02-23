@@ -22,6 +22,7 @@ import {
   ChefHat,
   AlertCircle,
   Printer,
+  Phone,
 } from "lucide-react";
 
 function formatPrice(pence: number): string {
@@ -182,6 +183,12 @@ function OrderCard({
           {order.flat_number && (
             <Badge variant="secondary" className="text-xs">
               Flat {order.flat_number}
+            </Badge>
+          )}
+          {order.mobile_number && (
+            <Badge variant="secondary" className="text-xs gap-1 bg-green-100 text-green-800 border-green-200">
+              <Phone className="h-3 w-3" />
+              {order.mobile_number}
             </Badge>
           )}
           <DeliveryBadge method={order.delivery_method} />

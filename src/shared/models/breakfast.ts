@@ -13,6 +13,7 @@ export interface Order {
   id: string;
   resident_name: string;
   flat_number: string | null;
+  mobile_number: string | null;
   delivery_method: 'delivery' | 'collection';
   notes: string | null;
   status: 'pending' | 'preparing' | 'ready' | 'delivered' | 'cancelled';

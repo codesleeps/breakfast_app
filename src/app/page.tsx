@@ -57,6 +57,7 @@ export default function HomePage() {
 
   const [residentName, setResidentName] = useState("");
   const [flatNumber, setFlatNumber] = useState("");
+  const [mobileNumber, setMobileNumber] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState<"delivery" | "collection">("collection");
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "donation">("cash");
   const [notes, setNotes] = useState("");
@@ -124,6 +125,7 @@ export default function HomePage() {
       const order = await createOrder({
         resident_name: residentName.trim(),
         flat_number: flatNumber.trim() || undefined,
+        mobile_number: mobileNumber.trim() || undefined,
         delivery_method: deliveryMethod,
         notes: notes.trim() || undefined,
         payment_method: paymentMethod,
@@ -134,6 +136,7 @@ export default function HomePage() {
       setCart(new Map());
       setResidentName("");
       setFlatNumber("");
+      setMobileNumber("");
       setDeliveryMethod("collection");
       setPaymentMethod("cash");
       setNotes("");
@@ -261,6 +264,10 @@ export default function HomePage() {
                   <div className="space-y-2">
                     <Label htmlFor="resident-name">Name <span className="text-red-500">*</span></Label>
                     <Input id="resident-name" placeholder="Enter your name" value={residentName} onChange={(e) => setResidentName(e.target.value)} className="border-amber-200 focus-visible:ring-amber-400 h-12" aria-required="true" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="mobile-number">Mobile Number <span className="text-muted-foreground text-xs">(for kitchen to contact you)</span></Label>
+                    <Input id="mobile-number" type="tel" placeholder="e.g. 07123 456789" value={mobileNumber} onChange={(e) => setMobileNumber(e.target.value)} className="border-amber-200 focus-visible:ring-amber-400 h-12" />
                   </div>
                 </div>
                 <Separator />
