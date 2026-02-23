@@ -56,25 +56,25 @@ export function MenuItemCard({
                   <Plus className="h-4 w-4" />
                 </Button>
               ) : quantity > 0 ? (
-                <div className="flex items-center gap-1.5 bg-amber-50 rounded-full px-1 py-0.5">
+                <div className="flex items-center gap-1 bg-amber-100 rounded-full px-1 py-0.5 border-2 border-amber-300">
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="h-11 w-11 rounded-full hover:bg-amber-200 touch-target"
+                    className="h-10 w-10 rounded-full hover:bg-amber-200 touch-target"
                     onClick={onRemove}
                     aria-label={`Remove one ${item.name} from cart`}
                   >
-                    <Minus className="h-3.5 w-3.5" />
+                    <Minus className="h-4 w-4" />
                   </Button>
-                  <span className="font-bold text-sm w-5 text-center" aria-label={`${quantity} in cart`}>{quantity}</span>
+                  <span className="font-bold text-base w-6 text-center text-amber-900" aria-label={`${quantity} in cart`}>{quantity}</span>
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="h-11 w-11 rounded-full hover:bg-amber-200 touch-target"
+                    className="h-10 w-10 rounded-full hover:bg-amber-200 touch-target"
                     onClick={onAdd}
                     aria-label={`Add another ${item.name} to cart`}
                   >
-                    <Plus className="h-3.5 w-3.5" />
+                    <Plus className="h-4 w-4" />
                   </Button>
                 </div>
               ) : (
