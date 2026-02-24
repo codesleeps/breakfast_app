@@ -7,6 +7,7 @@ export interface MenuItem {
   image_url: string | null;
   available: boolean;
   sort_order: number;
+  is_extra?: boolean;  // true for extras/add-ons
 }
 
 export interface Order {
@@ -34,9 +35,24 @@ export interface OrderItem {
 
 export interface OrderWithItems extends Order {
   items: OrderItem[];
+  extras?: OrderExtra[];  // Per-order extras
+}
+
+export interface OrderExtra {
+  id: string;
+  order_id: string;
+  menu_item_id: string;
+  quantity: number;
+  item_name: string;
+  item_price_pence: number;
 }
 
 export interface CartItem {
+  menuItem: MenuItem;
+  quantity: number;
+}
+
+export interface CartExtra {
   menuItem: MenuItem;
   quantity: number;
 }

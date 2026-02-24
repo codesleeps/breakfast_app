@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useMenu, useSettings, createOrder } from "@/client-lib/api-client";
-import type { MenuItem, CartItem, OrderWithItems } from "@/shared/models/breakfast";
+import type { MenuItem, CartItem, CartExtra, OrderWithItems } from "@/shared/models/breakfast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +27,9 @@ import {
   Coffee,
   Truck,
   Package,
+  Plus,
+  Minus,
+  Sparkles,
 } from "lucide-react";
 import { ServiceStatus } from "@/components/breakfast/ServiceStatus";
 import { KitchenClosedOverlay } from "@/components/breakfast/KitchenClosedOverlay";
@@ -42,6 +45,8 @@ function getCategoryIcon(category: string) {
       return <Leaf className="h-4 w-4 text-green-500" aria-hidden="true" />;
     case "Drinks":
       return <Coffee className="h-4 w-4 text-amber-800" aria-hidden="true" />;
+    case "Extras":
+      return <Sparkles className="h-4 w-4 text-purple-500" aria-hidden="true" />;
     default:
       return null;
   }
@@ -51,6 +56,7 @@ export default function HomePage() {
   const { data: menuItems, isLoading, error } = useMenu();
   const { data: settings } = useSettings();
   const [cart, setCart] = useState<Map<string, CartItem>>(new Map());
+  const [extras, setExtras] = useState<Map<string, CartExtra>>(new Map()); // Per-order extras
   const [sheetOpen, setSheetOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [successOrder, setSuccessOrder] = useState<OrderWithItems | null>(null);
@@ -72,6 +78,20 @@ export default function HomePage() {
   }, []);
 
   const addToCart = useCallback((item: MenuItem) => {
+    // Don't add extras to main cart - they go in extras map
+    if (item.is_extra) {
+      setExtras((prev) => {
+        const next = new Map(prev);
+        const existing = next.get(item.id);
+        if (existing) {
+          next.set(item.id, { ...existing, quantity: existing.quantity + 1 });
+        } else {
+          next.set(item.id, { menuItem: item, quantity: 1 });
+        }
+        return next;
+      });
+      return;
+    }
     setCart((prev) => {
       const next = new Map(prev);
       const existing = next.get(item.id);
@@ -85,6 +105,20 @@ export default function HomePage() {
   }, []);
 
   const removeFromCart = useCallback((itemId: string) => {
+    // Check if it's an extra
+    if (extras.has(itemId)) {
+      setExtras((prev) => {
+        const next = new Map(prev);
+        const existing = next.get(itemId);
+        if (existing && existing.quantity > 1) {
+          next.set(itemId, { ...existing, quantity: existing.quantity - 1 });
+        } else {
+          next.delete(itemId);
+        }
+        return next;
+      });
+      return;
+    }
     setCart((prev) => {
       const next = new Map(prev);
       const existing = next.get(itemId);
@@ -95,16 +129,37 @@ export default function HomePage() {
       }
       return next;
     });
-  }, []);
+  }, [extras]);
 
   const cartItems = useMemo(() => Array.from(cart.values()), [cart]);
+  const extrasItems = useMemo(() => Array.from(extras.values()), [extras]);
   const cartCount = useMemo(() => cartItems.reduce((sum, ci) => sum + ci.quantity, 0), [cartItems]);
-  const cartTotal = useMemo(() => cartItems.reduce((sum, ci) => sum + ci.menuItem.price_pence * ci.quantity, 0), [cartItems]);
+  const extrasCount = useMemo(() => extrasItems.reduce((sum, ex) => sum + ex.quantity, 0), [extrasItems]);
+  const cartTotal = useMemo(() => {
+    const itemsTotal = cartItems.reduce((sum, ci) => sum + ci.menuItem.price_pence * ci.quantity, 0);
+    const extrasTotal = extrasItems.reduce((sum, ex) => sum + ex.menuItem.price_pence * ex.quantity, 0);
+    return itemsTotal + extrasTotal;
+  }, [cartItems, extrasItems]);
+
+  // Separate main menu items from extras
+  const { mainMenuItems, extrasMenuItems } = useMemo(() => {
+    if (!menuItems) return { mainMenuItems: [], extrasMenuItems: [] };
+    const main: MenuItem[] = [];
+    const extraItems: MenuItem[] = [];
+    for (const item of menuItems) {
+      if (item.is_extra) {
+        extraItems.push(item);
+      } else {
+        main.push(item);
+      }
+    }
+    return { mainMenuItems: main, extrasMenuItems: extraItems };
+  }, [menuItems]);
 
   const groupedMenu = useMemo(() => {
-    if (!menuItems) return new Map<string, MenuItem[]>();
+    if (!mainMenuItems) return new Map<string, MenuItem[]>();
     const groups = new Map<string, MenuItem[]>();
-    for (const item of menuItems) {
+    for (const item of mainMenuItems) {
       const existing = groups.get(item.category);
       if (existing) {
         existing.push(item);
@@ -113,10 +168,11 @@ export default function HomePage() {
       }
     }
     return groups;
-  }, [menuItems]);
+  }, [mainMenuItems]);
 
   const handleSubmitOrder = async () => {
     if (!residentName.trim()) { toast.error("Please enter your name"); return; }
+    if (!mobileNumber.trim()) { toast.error("Please enter your mobile number"); return; }
     if (deliveryMethod === "delivery" && !flatNumber.trim()) { toast.error("Please enter your flat/room number for delivery"); return; }
     if (cartItems.length === 0) { toast.error("Your cart is empty"); return; }
 
@@ -130,10 +186,12 @@ export default function HomePage() {
         notes: notes.trim() || undefined,
         payment_method: paymentMethod,
         items: cartItems.map((ci) => ({ menu_item_id: ci.menuItem.id, quantity: ci.quantity })),
+        extras: extrasItems.map((ex) => ({ menu_item_id: ex.menuItem.id, quantity: ex.quantity })),
       });
       setSuccessOrder(order);
       setSheetOpen(false);
       setCart(new Map());
+      setExtras(new Map());
       setResidentName("");
       setFlatNumber("");
       setMobileNumber("");
@@ -212,6 +270,69 @@ export default function HomePage() {
               </div>
             </section>
           ))}
+          {/* Extras Section */}
+          {extrasMenuItems.length > 0 && (
+            <section aria-label="Extras">
+              <div className="flex items-center gap-2 mb-3">
+                {getCategoryIcon("Extras")}
+                <h2 className="text-lg font-bold">Extras</h2>
+                <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700">{extrasMenuItems.length} add-ons</Badge>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3" role="list">
+                {extrasMenuItems.map((item) => {
+                  const qty = extras.get(item.id)?.quantity ?? 0;
+                  return (
+                    <div
+                      key={item.id}
+                      className={`p-4 rounded-lg border-2 transition-all ${
+                        qty > 0
+                          ? "border-purple-500 bg-purple-100 shadow-md"
+                          : "border-gray-300 bg-white hover:border-purple-400 hover:shadow-md"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-bold text-lg text-gray-900">{item.name}</span>
+                        {qty > 0 && (
+                          <Badge variant="secondary" className="h-7 w-7 flex items-center justify-center rounded-full text-base font-bold bg-purple-600 text-white p-0">
+                            {qty}
+                          </Badge>
+                        )}
+                      </div>
+                      {item.description && (
+                        <p className="text-xs text-gray-600 mb-2 line-clamp-1">{item.description}</p>
+                      )}
+                      <div className="flex items-center justify-between">
+                        <span className="text-base font-bold text-gray-900">{formatPrice(item.price_pence)}</span>
+                        <div className="flex items-center gap-1">
+                          {qty > 0 && (
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              className="h-9 w-9 rounded-full border-2 border-purple-400 hover:bg-purple-200"
+                              onClick={() => removeFromCart(item.id)}
+                              disabled={!kitchenOpen}
+                              aria-label={`Remove ${item.name}`}
+                            >
+                              <Minus className="h-5 w-5" />
+                            </Button>
+                          )}
+                          <Button
+                            size="icon"
+                            className="h-9 w-9 rounded-full bg-purple-600 hover:bg-purple-700 text-white"
+                            onClick={() => addToCart(item)}
+                            disabled={!kitchenOpen}
+                            aria-label={`Add ${item.name}`}
+                          >
+                            <Plus className="h-5 w-5" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
         </div>
       )}
 
@@ -223,11 +344,11 @@ export default function HomePage() {
               <Button
                 className="w-full max-w-2xl mx-auto flex items-center justify-between h-14 rounded-xl bg-amber-500 hover:bg-amber-600 text-white shadow-lg text-base touch-target"
                 size="lg"
-                aria-label={`View cart: ${cartCount} ${cartCount === 1 ? "item" : "items"}, total ${formatPrice(cartTotal)}`}
+                aria-label={`View cart: ${cartCount + extrasCount} items, total ${formatPrice(cartTotal)}`}
               >
                 <div className="flex items-center gap-2">
                   <ShoppingCart className="h-5 w-5" aria-hidden="true" />
-                  <span className="font-bold">{cartCount} {cartCount === 1 ? "item" : "items"}</span>
+                  <span className="font-bold">{cartCount + extrasCount} {(cartCount + extrasCount) === 1 ? "item" : "items"}</span>
                 </div>
                 <span className="font-bold text-lg">{formatPrice(cartTotal)}</span>
               </Button>
@@ -251,6 +372,26 @@ export default function HomePage() {
                       </div>
                     ))}
                   </div>
+                  {/* Extras */}
+                  {extrasItems.length > 0 && (
+                    <>
+                      <Separator className="my-2" />
+                      <h4 className="font-semibold text-sm text-purple-600 uppercase tracking-wide mb-2 flex items-center gap-1">
+                        <Sparkles className="h-3 w-3" /> Extras
+                      </h4>
+                      <div className="space-y-2">
+                        {extrasItems.map((ex) => (
+                          <div key={ex.menuItem.id} className="flex items-center justify-between py-1">
+                            <div className="flex items-center gap-3">
+                              <Badge variant="secondary" className="h-6 w-6 flex items-center justify-center rounded-full text-xs font-bold bg-purple-100 text-purple-700">{ex.quantity}</Badge>
+                              <span className="text-sm">{ex.menuItem.name}</span>
+                            </div>
+                            <span className="font-semibold text-purple-700 text-sm">{formatPrice(ex.menuItem.price_pence * ex.quantity)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
                   <Separator className="mt-2" />
                   <div className="flex justify-between py-3 font-bold text-lg">
                     <span>Total</span>
@@ -266,8 +407,8 @@ export default function HomePage() {
                     <Input id="resident-name" placeholder="Enter your name" value={residentName} onChange={(e) => setResidentName(e.target.value)} className="border-amber-200 focus-visible:ring-amber-400 h-12" aria-required="true" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="mobile-number">Mobile Number <span className="text-muted-foreground text-xs">(for kitchen to contact you)</span></Label>
-                    <Input id="mobile-number" type="tel" placeholder="e.g. 07123 456789" value={mobileNumber} onChange={(e) => setMobileNumber(e.target.value)} className="border-amber-200 focus-visible:ring-amber-400 h-12" />
+                    <Label htmlFor="mobile-number">Mobile Number <span className="text-red-500">*</span></Label>
+                    <Input id="mobile-number" type="tel" placeholder="e.g. 07123 456789" value={mobileNumber} onChange={(e) => setMobileNumber(e.target.value)} className="border-amber-200 focus-visible:ring-amber-400 h-12" aria-required="true" />
                   </div>
                 </div>
                 <Separator />

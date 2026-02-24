@@ -2,22 +2,35 @@ import { queryInternalDatabase } from '@/server-lib/internal-db-query';
 import { NextResponse } from 'next/server';
 import type { MenuItem } from '@/shared/models/breakfast';
 
-const VALID_CATEGORIES = ['Hot', 'Light', 'Drinks'];
+const VALID_CATEGORIES = ['Hot', 'Light', 'Drinks', 'Extras'];
 
 // Mock menu items for demo mode (same as in /api/menu/route.ts but includes all fields)
 const MOCK_MENU_ITEMS: MenuItem[] = [
-  { id: '1', name: 'Kitchen Special', description: '2 x fried eggs, 4 x fish fingers, baked beans, fried plantains and 3 x fried dumplings', price_pence: 650, category: 'Hot', image_url: '/kitchen_special.jpg', available: true, sort_order: 1 },
-  { id: '2', name: 'Scrambled Eggs on Toast', description: 'Fluffy scrambled eggs on toasted sourdough', price_pence: 400, category: 'Hot', image_url: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=200&h=200&fit=crop', available: true, sort_order: 2 },
-  { id: '3', name: 'Bacon Sandwich', description: 'Crispy bacon in a fresh bap', price_pence: 350, category: 'Hot', image_url: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=200&h=200&fit=crop', available: true, sort_order: 3 },
-  { id: '4', name: 'Poached Eggs on Avocado Toast', description: 'Perfectly poached eggs on smashed avocado', price_pence: 550, category: 'Hot', image_url: 'https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?w=200&h=200&fit=crop', available: true, sort_order: 4 },
-  { id: '5', name: 'Homemade Flatbread', description: 'Freshly made flatbread, served warm', price_pence: 150, category: 'Light', image_url: '/Flatbread.webp', available: true, sort_order: 5 },
-  { id: '6', name: 'Greek Yogurt Bowl', description: 'Creamy yogurt with honey, granola and fresh berries', price_pence: 350, category: 'Light', image_url: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=200&h=200&fit=crop', available: true, sort_order: 6 },
-  { id: '7', name: 'Fresh Fruit Salad', description: 'Seasonal fruits served with a mint drizzle', price_pence: 300, category: 'Light', image_url: 'https://images.unsplash.com/photo-1564093497595-593b96d80180?w=200&h=200&fit=crop', available: true, sort_order: 7 },
-  { id: '8', name: 'Croissant', description: 'Buttery, flaky pastry freshly baked', price_pence: 250, category: 'Light', image_url: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=200&h=200&fit=crop', available: true, sort_order: 8 },
-  { id: '9', name: 'Filter Coffee', description: 'Rich, smooth house blend', price_pence: 200, category: 'Drinks', image_url: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=200&h=200&fit=crop', available: true, sort_order: 9 },
-  { id: '10', name: 'Tea', description: 'English Breakfast tea with milk', price_pence: 150, category: 'Drinks', image_url: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=200&h=200&fit=crop', available: true, sort_order: 10 },
-  { id: '11', name: 'Orange Juice', description: 'Freshly squeezed orange juice', price_pence: 250, category: 'Drinks', image_url: 'https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=200&h=200&fit=crop', available: true, sort_order: 11 },
-  { id: '12', name: 'Cappuccino', description: 'Espresso with steamed milk foam', price_pence: 300, category: 'Drinks', image_url: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=200&h=200&fit=crop', available: true, sort_order: 12 },
+  // Main dishes - Hot
+  { id: '1', name: 'Kitchen Special', description: '2 x fried eggs, 4 x fish fingers, baked beans, fried plantains and 3 x fried dumplings', price_pence: 650, category: 'Hot', image_url: '/kitchen_special.jpg', available: true, sort_order: 1, is_extra: false },
+  { id: '2', name: 'Scrambled Eggs with Flatbread', description: 'Fluffy scrambled eggs served with homemade flatbread', price_pence: 400, category: 'Hot', image_url: '/open_flatbread.jpg', available: true, sort_order: 2, is_extra: false },
+  { id: '3', name: 'Bacon Sandwich', description: 'Crispy bacon in a fresh bap', price_pence: 350, category: 'Hot', image_url: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=200&h=200&fit=crop', available: true, sort_order: 3, is_extra: false },
+  { id: '4', name: 'Poached Eggs with Flatbread', description: 'Perfectly poached eggs served with homemade flatbread', price_pence: 450, category: 'Hot', image_url: '/quarter_flatbread.jpg', available: true, sort_order: 4, is_extra: false },
+  // Main dishes - Light
+  { id: '5', name: 'Spicy Flatbread', description: 'Homemade flatbread filled with spicy ground chicken, onions and peppers', price_pence: 350, category: 'Light', image_url: '/Flatbread.webp', available: true, sort_order: 5, is_extra: false },
+  { id: '6', name: 'Greek Yogurt Bowl', description: 'Creamy yogurt with honey, granola and fresh berries', price_pence: 350, category: 'Light', image_url: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=200&h=200&fit=crop', available: true, sort_order: 6, is_extra: false },
+  { id: '7', name: 'Fresh Fruit Salad', description: 'Seasonal fruits served with a mint drizzle', price_pence: 300, category: 'Light', image_url: 'https://images.unsplash.com/photo-1564093497595-593b96d80180?w=200&h=200&fit=crop', available: true, sort_order: 7, is_extra: false },
+  { id: '8', name: 'Croissant', description: 'Buttery, flaky pastry freshly baked', price_pence: 250, category: 'Light', image_url: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=200&h=200&fit=crop', available: true, sort_order: 8, is_extra: false },
+  // Drinks
+  { id: '9', name: 'Filter Coffee', description: 'Rich, smooth house blend', price_pence: 200, category: 'Drinks', image_url: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=200&h=200&fit=crop', available: true, sort_order: 9, is_extra: false },
+  { id: '10', name: 'Tea', description: 'English Breakfast tea with milk', price_pence: 150, category: 'Drinks', image_url: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=200&h=200&fit=crop', available: true, sort_order: 10, is_extra: false },
+  { id: '11', name: 'Orange Juice', description: 'Freshly squeezed orange juice', price_pence: 250, category: 'Drinks', image_url: 'https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=200&h=200&fit=crop', available: true, sort_order: 11, is_extra: false },
+  { id: '12', name: 'Cappuccino', description: 'Espresso with steamed milk foam', price_pence: 300, category: 'Drinks', image_url: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=200&h=200&fit=crop', available: true, sort_order: 12, is_extra: false },
+  // Extras
+  { id: 'ex1', name: 'Extra Fried Egg', description: 'Single fried egg', price_pence: 50, category: 'Extras', image_url: '/eggs_boiled_fried_scrambled_poached.jpg', available: true, sort_order: 101, is_extra: true },
+  { id: 'ex2', name: 'Extra Scrambled Egg', description: 'Portion of scrambled eggs', price_pence: 75, category: 'Extras', image_url: '/eggs_boiled_fried_scrambled_poached.jpg', available: true, sort_order: 102, is_extra: true },
+  { id: 'ex3', name: 'Extra Mushrooms', description: 'Sautéed mushrooms', price_pence: 50, category: 'Extras', image_url: null, available: true, sort_order: 103, is_extra: true },
+  { id: 'ex4', name: 'Extra Tomatoes', description: 'Grilled tomatoes', price_pence: 50, category: 'Extras', image_url: null, available: true, sort_order: 104, is_extra: true },
+  { id: 'ex5', name: 'Extra Cheese', description: 'Cheddar cheese', price_pence: 50, category: 'Extras', image_url: null, available: true, sort_order: 105, is_extra: true },
+  { id: 'ex6', name: 'Extra Fish Fingers', description: '2 x fish fingers', price_pence: 100, category: 'Extras', image_url: '/fish_fingers.png', available: true, sort_order: 106, is_extra: true },
+  { id: 'ex7', name: 'Extra Fried Dumplings', description: '2 x fried dumplings', price_pence: 100, category: 'Extras', image_url: '/fried_dumplings.jpg', available: true, sort_order: 107, is_extra: true },
+  { id: 'ex8', name: 'Extra Plantains', description: 'Fried plantains', price_pence: 75, category: 'Extras', image_url: '/fried_plantains.png', available: true, sort_order: 108, is_extra: true },
+  { id: 'ex9', name: 'Extra Baked Beans', description: 'Portion of baked beans', price_pence: 50, category: 'Extras', image_url: null, available: true, sort_order: 109, is_extra: true },
 ];
 
 export async function GET() {

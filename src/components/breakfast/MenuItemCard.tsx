@@ -42,7 +42,7 @@ export function MenuItemCard({
             )}
           </div>
           <div className="flex items-center justify-between mt-2 gap-2">
-            <p className="text-lg font-bold text-amber-800">
+            <p className="text-lg font-bold text-white bg-amber-600 px-3 py-1 rounded-full">
               {formatPrice(item.price_pence)}
             </p>
             <div className="shrink-0">

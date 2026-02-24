@@ -23,6 +23,7 @@ import {
   AlertCircle,
   Printer,
   Phone,
+  Sparkles,
 } from "lucide-react";
 
 function formatPrice(pence: number): string {
@@ -211,6 +212,27 @@ function OrderCard({
             </div>
           ))}
         </div>
+        {/* Extras */}
+        {order.extras && order.extras.length > 0 && (
+          <div className="mb-3 p-2 bg-purple-50 rounded-md border border-purple-200">
+            <div className="text-xs font-semibold text-purple-700 mb-1 flex items-center gap-1">
+              <Sparkles className="h-3 w-3" /> Extras
+            </div>
+            <div className="space-y-1">
+              {order.extras.map((extra) => (
+                <div key={extra.id} className="flex justify-between text-sm">
+                  <span className="text-purple-800">
+                    <span className="font-semibold">{extra.quantity}×</span>{" "}
+                    {extra.item_name}
+                  </span>
+                  <span className="text-purple-600">
+                    {formatPrice(extra.item_price_pence * extra.quantity)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="flex justify-between font-bold text-sm border-t pt-2">
           <span>Total</span>
           <span>{formatPrice(order.total_pence)}</span>

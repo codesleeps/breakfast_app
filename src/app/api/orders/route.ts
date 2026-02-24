@@ -1,6 +1,6 @@
 import { queryInternalDatabase } from '@/server-lib/internal-db-query';
 import { NextResponse } from 'next/server';
-import type { Order, OrderItem, OrderWithItems } from '@/shared/models/breakfast';
+import type { Order, OrderItem, OrderWithItems, OrderExtra } from '@/shared/models/breakfast';
 import { demoOrders } from '@/server-lib/demo-store';
 
 const VALID_DELIVERY_METHODS = ['delivery', 'collection'];
@@ -154,9 +154,11 @@ function createDemoOrder(data: {
   notes?: string | null;
   payment_method: 'cash' | 'card' | 'donation';
   items: Array<{ menu_item_id: string; quantity: number }>;
+  extras?: Array<{ menu_item_id: string; quantity: number }>;
 }): OrderWithItems {
   let totalPence = 0;
   const orderItems: OrderItem[] = [];
+  const orderExtras: OrderExtra[] = [];
   const orderId = `demo-${Date.now()}`;
 
   for (const item of data.items) {
@@ -174,6 +176,24 @@ function createDemoOrder(data: {
     }
   }
 
+  // Process extras
+  if (data.extras) {
+    for (const extra of data.extras) {
+      const menuItem = DEMO_MENU_ITEMS.get(extra.menu_item_id);
+      if (menuItem) {
+        totalPence += menuItem.price_pence * extra.quantity;
+        orderExtras.push({
+          id: `extra-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          order_id: orderId,
+          menu_item_id: extra.menu_item_id,
+          quantity: extra.quantity,
+          item_name: menuItem.name,
+          item_price_pence: menuItem.price_pence,
+        });
+      }
+    }
+  }
+
   const now = new Date().toISOString();
   const orderWithItems: OrderWithItems = {
     id: orderId,
@@ -188,6 +208,7 @@ function createDemoOrder(data: {
     created_at: now,
     updated_at: now,
     items: orderItems,
+    extras: orderExtras,
   };
 
   demoOrders.push(orderWithItems);
@@ -196,7 +217,7 @@ function createDemoOrder(data: {
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { resident_name, flat_number, mobile_number, delivery_method, notes, payment_method, items } = body;
+  const { resident_name, flat_number, mobile_number, delivery_method, notes, payment_method, items, extras } = body;
 
   // Validate required fields
   if (!resident_name || typeof resident_name !== 'string' || resident_name.trim().length === 0) {
@@ -222,6 +243,15 @@ export async function POST(request: Request) {
     }
   }
 
+  // Validate extras structure if provided
+  if (extras && Array.isArray(extras)) {
+    for (const extra of extras) {
+      if (!extra.menu_item_id || typeof extra.quantity !== 'number' || extra.quantity < 1) {
+        return NextResponse.json({ error: 'Invalid extra in order' }, { status: 400 });
+      }
+    }
+  }
+
   // Demo mode - create order in memory (skip kitchen hours check for demo)
   if (await shouldUseDemoMode()) {
     // Verify all items exist in demo menu
@@ -229,6 +259,15 @@ export async function POST(request: Request) {
       const menuItem = DEMO_MENU_ITEMS.get(item.menu_item_id);
       if (!menuItem) {
         return NextResponse.json({ error: `Menu item not found: ${item.menu_item_id}` }, { status: 400 });
+      }
+    }
+    // Verify all extras exist in demo menu
+    if (extras && Array.isArray(extras)) {
+      for (const extra of extras) {
+        const menuItem = DEMO_MENU_ITEMS.get(extra.menu_item_id);
+        if (!menuItem) {
+          return NextResponse.json({ error: `Extra item not found: ${extra.menu_item_id}` }, { status: 400 });
+        }
       }
     }
 
@@ -240,6 +279,7 @@ export async function POST(request: Request) {
       notes,
       payment_method,
       items,
+      extras,
     });
     return NextResponse.json(order, { status: 201 });
   }
