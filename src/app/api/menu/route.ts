@@ -15,7 +15,7 @@ const MOCK_MENU_ITEMS = [
   { id: '8', name: 'Cornmeal Porridge', description: 'Freshly prepared cornmeal with milk and toppings', price_pence: 250, category: 'Light', image_url: '/cornmeal.webp', available: true, sort_order: 8, is_extra: false },
   // Drinks
   { id: '9', name: 'Filter Coffee', description: 'Rich, smooth house blend', price_pence: 150, category: 'Drinks', image_url: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=200&h=200&fit=crop', available: true, sort_order: 9, is_extra: false },
-  { id: '10', name: 'Tea', description: 'English Breakfast tea, price_pence: 100, category: 'Drinks', image_url: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=200&h=200&fit=crop', available: true, sort_order: 10, is_extra: false },
+  { id: '10', name: 'Tea', description: 'English Breakfast tea', price_pence: 100, category: 'Drinks', image_url: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=200&h=200&fit=crop', available: true, sort_order: 10, is_extra: false },
   { id: '11', name: 'Orange Juice', description: 'Freshly squeezed orange juice', price_pence: 200, category: 'Drinks', image_url: 'https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=200&h=200&fit=crop', available: true, sort_order: 11, is_extra: false },
   { id: '12', name: 'Cappuccino', description: 'Espresso with steamed milk foam', price_pence: 200, category: 'Drinks', image_url: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=200&h=200&fit=crop', available: true, sort_order: 12, is_extra: false },
   // Extras
