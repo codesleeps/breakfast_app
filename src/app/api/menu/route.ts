@@ -11,8 +11,8 @@ const MOCK_MENU_ITEMS = [
   // Main dishes - Light
   { id: '5', name: 'Spicy Flatbread', description: 'Homemade flatbread filled with spicy ground chicken, onions and peppers topped with cheese and salad', price_pence: 400, category: 'Light', image_url: '/open_flatbread.jpg', available: true, sort_order: 5, is_extra: false },
   { id: '6', name: 'Greek Yogurt Bowl', description: 'Creamy yogurt with honey, granola and fresh berries', price_pence: 350, category: 'Light', image_url: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=200&h=200&fit=crop', available: true, sort_order: 6, is_extra: false },
-  { id: '7', name: 'Fresh Fruit Salad', description: 'Seasonal fruits served with a mint drizzle', price_pence: 300, category: 'Light', image_url: 'https://images.unsplash.com/photo-1564093497595-593b96d80180?w=200&h=200&fit=crop', available: true, sort_order: 7, is_extra: false },
-  { id: '8', name: 'Croissant', description: 'Buttery, flaky pastry freshly baked', price_pence: 250, category: 'Light', image_url: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=200&h=200&fit=crop', available: true, sort_order: 8, is_extra: false },
+  { id: '7', name: 'Oats Porridge', description: 'Freshly prepared oats with milk and toppings', price_pence: 250, category: 'Light', image_url: '/oats.jpg', available: true, sort_order: 7, is_extra: false },
+  { id: '8', name: 'Cornmeal Porridge', description: 'Freshly prepared cornmeal with milk and toppings', price_pence: 250, category: 'Light', image_url: '/cornmeal.webp', available: true, sort_order: 8, is_extra: false },
   // Drinks
   { id: '9', name: 'Filter Coffee', description: 'Rich, smooth house blend', price_pence: 200, category: 'Drinks', image_url: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=200&h=200&fit=crop', available: true, sort_order: 9, is_extra: false },
   { id: '10', name: 'Tea', description: 'English Breakfast tea with milk', price_pence: 150, category: 'Drinks', image_url: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=200&h=200&fit=crop', available: true, sort_order: 10, is_extra: false },
