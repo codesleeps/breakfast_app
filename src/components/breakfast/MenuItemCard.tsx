@@ -21,9 +21,9 @@ export function MenuItemCard({
 }) {
   return (
     <Card className="overflow-hidden border-amber-100 transition-shadow hover:shadow-md">
-      <div className="flex">
+      <div className="flex flex-row">
         {item.image_url && (
-          <div className="relative w-28 h-28 shrink-0 sm:w-32 sm:h-32">
+          <div className="relative w-28 min-h-28 shrink-0 sm:w-32 sm:min-h-32 self-stretch">
             <img
               src={item.image_url}
               alt=""
