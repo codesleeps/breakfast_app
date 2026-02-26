@@ -157,6 +157,12 @@ export function OrderSuccess({
                 : "Collection from kitchen"}
             </span>
           </div>
+          {currentOrder.delivery_method === "delivery" && currentOrder.address && (
+            <div className="flex items-start gap-2 text-sm text-muted-foreground">
+              <span>📍</span>
+              <span>{currentOrder.address}</span>
+            </div>
+          )}
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <CircleDot className="h-4 w-4" aria-hidden="true" />
             <span className="capitalize">{currentOrder.payment_method} payment</span>

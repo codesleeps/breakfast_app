@@ -64,6 +64,7 @@ export default function HomePage() {
   const [residentName, setResidentName] = useState("");
   const [flatNumber, setFlatNumber] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
+  const [address, setAddress] = useState("");
   const [deliveryMethod, setDeliveryMethod] = useState<"delivery" | "collection">("collection");
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "donation">("cash");
   const [notes, setNotes] = useState("");
@@ -174,6 +175,7 @@ export default function HomePage() {
     if (!residentName.trim()) { toast.error("Please enter your name"); return; }
     if (!mobileNumber.trim()) { toast.error("Please enter your mobile number"); return; }
     if (deliveryMethod === "delivery" && !flatNumber.trim()) { toast.error("Please enter your flat/room number for delivery"); return; }
+    if (deliveryMethod === "delivery" && !address.trim()) { toast.error("Please enter your address for delivery"); return; }
     if (cartItems.length === 0) { toast.error("Your cart is empty"); return; }
 
     setSubmitting(true);
@@ -182,6 +184,7 @@ export default function HomePage() {
         resident_name: residentName.trim(),
         flat_number: flatNumber.trim() || undefined,
         mobile_number: mobileNumber.trim() || undefined,
+        address: address.trim() || undefined,
         delivery_method: deliveryMethod,
         notes: notes.trim() || undefined,
         payment_method: paymentMethod,
@@ -195,6 +198,7 @@ export default function HomePage() {
       setResidentName("");
       setFlatNumber("");
       setMobileNumber("");
+      setAddress("");
       setDeliveryMethod("collection");
       setPaymentMethod("cash");
       setNotes("");
@@ -430,9 +434,15 @@ export default function HomePage() {
                     </div>
                   </RadioGroup>
                   {deliveryMethod === "delivery" && (
-                    <div className="space-y-2 pl-1">
-                      <Label htmlFor="flat-number">Flat / Room Number <span className="text-red-500">*</span></Label>
-                      <Input id="flat-number" placeholder="e.g. Flat 12" value={flatNumber} onChange={(e) => setFlatNumber(e.target.value)} className="border-amber-200 focus-visible:ring-amber-400 h-12" aria-required="true" />
+                    <div className="space-y-3 pl-1">
+                      <div className="space-y-2">
+                        <Label htmlFor="flat-number">Flat / Room Number <span className="text-red-500">*</span></Label>
+                        <Input id="flat-number" placeholder="e.g. Flat 12" value={flatNumber} onChange={(e) => setFlatNumber(e.target.value)} className="border-amber-200 focus-visible:ring-amber-400 h-12" aria-required="true" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="address">Delivery Address <span className="text-red-500">*</span></Label>
+                        <Textarea id="address" placeholder="e.g. 123 Birmingham Road, B1 1AA" value={address} onChange={(e) => setAddress(e.target.value)} className="border-amber-200 focus-visible:ring-amber-400 resize-none" rows={2} aria-required="true" />
+                      </div>
                     </div>
                   )}
                 </div>

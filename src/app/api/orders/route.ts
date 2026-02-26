@@ -110,7 +110,7 @@ export async function GET(request: Request) {
     const statusFilter = searchParams.get('status');
 
     let orderQuery = `
-      SELECT id, resident_name, flat_number, mobile_number, delivery_method, notes, status, payment_method, total_pence, created_at, updated_at
+      SELECT id, resident_name, flat_number, mobile_number, address, delivery_method, notes, status, payment_method, total_pence, created_at, updated_at
       FROM orders
       WHERE created_at >= CURRENT_DATE
     `;
@@ -163,6 +163,7 @@ function createDemoOrder(data: {
   resident_name: string;
   flat_number?: string | null;
   mobile_number?: string | null;
+  address?: string | null;
   delivery_method: 'delivery' | 'collection';
   notes?: string | null;
   payment_method: 'cash' | 'card' | 'donation';
@@ -213,6 +214,7 @@ function createDemoOrder(data: {
     resident_name: data.resident_name.trim(),
     flat_number: data.flat_number?.trim() || null,
     mobile_number: data.mobile_number?.trim() || null,
+    address: data.address?.trim() || null,
     delivery_method: data.delivery_method,
     notes: data.notes?.trim() || null,
     status: 'pending',
@@ -230,7 +232,7 @@ function createDemoOrder(data: {
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { resident_name, flat_number, mobile_number, delivery_method, notes, payment_method, items, extras } = body;
+  const { resident_name, flat_number, mobile_number, address, delivery_method, notes, payment_method, items, extras } = body;
 
   // Validate required fields
   if (!resident_name || typeof resident_name !== 'string' || resident_name.trim().length === 0) {
@@ -288,6 +290,7 @@ export async function POST(request: Request) {
       resident_name,
       flat_number,
       mobile_number,
+      address,
       delivery_method,
       notes,
       payment_method,
@@ -338,13 +341,14 @@ export async function POST(request: Request) {
 
     // Insert order
     const orderRows = await queryInternalDatabase(
-      `INSERT INTO orders (id, resident_name, flat_number, mobile_number, delivery_method, notes, status, payment_method, total_pence, created_at, updated_at)
-       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, 'pending', $6, $7, NOW(), NOW())
-       RETURNING id, resident_name, flat_number, mobile_number, delivery_method, notes, status, payment_method, total_pence, created_at, updated_at`,
+      `INSERT INTO orders (id, resident_name, flat_number, mobile_number, address, delivery_method, notes, status, payment_method, total_pence, created_at, updated_at)
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, 'pending', $7, $8, NOW(), NOW())
+       RETURNING id, resident_name, flat_number, mobile_number, address, delivery_method, notes, status, payment_method, total_pence, created_at, updated_at`,
       [
         resident_name.trim(),
         flat_number?.trim() || null,
         mobile_number?.trim() || null,
+        address?.trim() || null,
         delivery_method,
         notes?.trim() || null,
         payment_method,

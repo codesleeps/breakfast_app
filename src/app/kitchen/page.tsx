@@ -195,6 +195,13 @@ function OrderCard({
           <DeliveryBadge method={order.delivery_method} />
           <PaymentBadge method={order.payment_method} />
         </div>
+        {order.delivery_method === 'delivery' && order.address && (
+          <div className="mt-2 p-2 bg-blue-50 rounded-md border border-blue-200">
+            <p className="text-xs text-blue-800">
+              <span className="font-semibold">📍 Address:</span> {order.address}
+            </p>
+          </div>
+        )}
       </CardHeader>
       <CardContent className="px-4 pb-4">
         <Separator className="mb-3" />

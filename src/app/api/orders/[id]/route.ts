@@ -14,7 +14,7 @@ export async function GET(
     }
 
     const orderRows = await queryInternalDatabase(
-      `SELECT id, resident_name, flat_number, delivery_method, notes, status, payment_method, total_pence, created_at, updated_at
+      `SELECT id, resident_name, flat_number, mobile_number, address, delivery_method, notes, status, payment_method, total_pence, created_at, updated_at
        FROM orders WHERE id = $1`,
       [id]
     ) as unknown as Order[];
