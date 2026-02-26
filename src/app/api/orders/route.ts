@@ -9,20 +9,33 @@ const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'frid
 
 let useDemoMode = false;
 
-// Demo menu items (used when no database)
+// Demo menu items (used when no database) - must match MOCK_MENU_ITEMS in /api/menu/route.ts
 const DEMO_MENU_ITEMS = new Map([
-  ['1', { id: '1', name: 'Full English Breakfast', price_pence: 650, available: true }],
-  ['2', { id: '2', name: 'Scrambled Eggs on Toast', price_pence: 400, available: true }],
-  ['3', { id: '3', name: 'Bacon Sandwich', price_pence: 350, available: true }],
-  ['4', { id: '4', name: 'Poached Eggs on Avocado Toast', price_pence: 550, available: true }],
-  ['5', { id: '5', name: 'Toast with Jam', price_pence: 150, available: true }],
-  ['6', { id: '6', name: 'Greek Yogurt Bowl', price_pence: 350, available: true }],
-  ['7', { id: '7', name: 'Fresh Fruit Salad', price_pence: 300, available: true }],
-  ['8', { id: '8', name: 'Croissant', price_pence: 250, available: true }],
-  ['9', { id: '9', name: 'Filter Coffee', price_pence: 200, available: true }],
-  ['10', { id: '10', name: 'Tea', price_pence: 150, available: true }],
-  ['11', { id: '11', name: 'Orange Juice', price_pence: 250, available: true }],
-  ['12', { id: '12', name: 'Cappuccino', price_pence: 300, available: true }],
+  // Main dishes - Hot
+  ['1', { id: '1', name: 'Kitchen Special', price_pence: 500, available: true }],
+  ['2', { id: '2', name: 'Scrambled Eggs with Flatbread', price_pence: 300, available: true }],
+  ['3', { id: '3', name: 'Bacon Flatbread', price_pence: 350, available: true }],
+  ['4', { id: '4', name: 'Poached Eggs with Flatbread', price_pence: 300, available: true }],
+  // Main dishes - Light
+  ['5', { id: '5', name: 'Spicy Flatbread', price_pence: 400, available: true }],
+  ['6', { id: '6', name: 'Greek Yogurt Bowl', price_pence: 300, available: true }],
+  ['7', { id: '7', name: 'Oats Porridge', price_pence: 250, available: true }],
+  ['8', { id: '8', name: 'Cornmeal Porridge', price_pence: 250, available: true }],
+  // Drinks
+  ['9', { id: '9', name: 'Filter Coffee', price_pence: 150, available: true }],
+  ['10', { id: '10', name: 'Tea', price_pence: 100, available: true }],
+  ['11', { id: '11', name: 'Orange Juice', price_pence: 200, available: true }],
+  ['12', { id: '12', name: 'Cappuccino', price_pence: 200, available: true }],
+  // Extras
+  ['ex1', { id: 'ex1', name: 'Extra Fried Egg', price_pence: 50, available: true }],
+  ['ex2', { id: 'ex2', name: 'Extra Scrambled Egg', price_pence: 75, available: true }],
+  ['ex3', { id: 'ex3', name: 'Extra Mushrooms', price_pence: 50, available: true }],
+  ['ex4', { id: 'ex4', name: 'Extra Tomatoes', price_pence: 50, available: true }],
+  ['ex5', { id: 'ex5', name: 'Extra Cheese', price_pence: 50, available: true }],
+  ['ex6', { id: 'ex6', name: 'Extra Fish Fingers', price_pence: 100, available: true }],
+  ['ex7', { id: 'ex7', name: 'Extra Fried Dumplings', price_pence: 100, available: true }],
+  ['ex8', { id: 'ex8', name: 'Extra Plantains', price_pence: 75, available: true }],
+  ['ex9', { id: 'ex9', name: 'Extra Baked Beans', price_pence: 50, available: true }],
 ]);
 
 // Check if we should use demo mode (no valid database tables)
