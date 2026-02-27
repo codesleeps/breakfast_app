@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Community Breakfast",
+    title: "Aston Breakfast Club",
   },
 };
 

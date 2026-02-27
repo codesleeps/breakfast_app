@@ -461,7 +461,7 @@ function PrintableOrders({ orders }: { orders: OrderWithItems[] }) {
 
       {/* Footer */}
       <div style={{ borderTop: "2px solid #000", marginTop: "20px", paddingTop: "8px", fontSize: "11px", color: "#666", textAlign: "center" }}>
-        Community Kitchen · Birmingham Supported Living · Printed{" "}
+        Aston Breakfast Club · Printed{" "}
         {new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
       </div>
     </div>

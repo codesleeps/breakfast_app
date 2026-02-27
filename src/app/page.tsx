@@ -226,7 +226,7 @@ export default function HomePage() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold mb-1">☀️ Good Morning!</h1>
-        <p className="text-muted-foreground text-sm mb-2">Community Breakfast Service · Birmingham</p>
+        <p className="text-muted-foreground text-sm mb-2">Aston Breakfast Club · Birmingham</p>
         <div className="flex items-center justify-between flex-wrap gap-2">
           <ServiceStatus settings={settings} />
           <Badge variant="outline" className="text-xs border-amber-300 text-amber-800">
