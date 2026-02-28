@@ -21,6 +21,10 @@ export const metadata: Metadata = {
   title: appName,
   description: `${appName} - Community Breakfast Ordering`,
   manifest: "/manifest.json",
+  icons: {
+    icon: "/breakfastApp_favicon.png",
+    apple: "/breakfastApp_favicon.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

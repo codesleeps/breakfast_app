@@ -1,18 +1,10 @@
 import { betterAuth } from "better-auth";
 import { Pool } from "@neondatabase/serverless";
 
-console.log("Auth module initializing...");
-console.log("DATABASE_URL exists:", !!process.env.DATABASE_URL);
-console.log("BETTER_AUTH_URL:", process.env.BETTER_AUTH_URL);
-console.log("GOOGLE_CLIENT_ID exists:", !!process.env.GOOGLE_CLIENT_ID);
-console.log("GOOGLE_CLIENT_SECRET exists:", !!process.env.GOOGLE_CLIENT_SECRET);
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
-
 export const auth = betterAuth({
-  database: pool,
+  database: new Pool({
+    connectionString: process.env.DATABASE_URL,
+  }),
   baseURL: process.env.BETTER_AUTH_URL,
   secret: process.env.BETTER_AUTH_SECRET,
   socialProviders: {
@@ -22,5 +14,3 @@ export const auth = betterAuth({
     },
   },
 });
-
-console.log("Auth initialized successfully");

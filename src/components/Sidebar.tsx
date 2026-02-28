@@ -1,6 +1,7 @@
 "use client";
 
 import { LogIn, Menu } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { authClient, getAuthClient } from "@/client-lib/auth-client";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -59,6 +60,13 @@ export function Sidebar() {
             ) : (
               <SidebarTrigger className="shrink-0" />
             )}
+            <Image
+              src="/breakfastApp_logo.png"
+              alt="Aston Breakfast Club"
+              width={32}
+              height={32}
+              className="shrink-0 rounded"
+            />
             {state === "expanded" && (
               <span className="font-semibold text-sidebar-foreground truncate">
                 {process.env.NEXT_PUBLIC_APP_NAME || "Breakfast App"}
