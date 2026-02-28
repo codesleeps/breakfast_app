@@ -3,7 +3,8 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useMenu, useSettings, createOrder } from "@/client-lib/api-client";
 import { getAuthClient } from "@/client-lib/auth-client";
-import type { MenuItem, CartItem, CartExtra, OrderWithItems } from "@/shared/models/breakfast";
+import type { MenuItem, CartItem, CartExtra, OrderWithItems, DietaryFlag } from "@/shared/models/breakfast";
+import { DIETARY_FLAGS } from "@/shared/models/breakfast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,12 +33,27 @@ import {
   Minus,
   Sparkles,
   Clock,
+  User,
+  Save,
+  Heart,
 } from "lucide-react";
 import { ServiceStatus } from "@/components/breakfast/ServiceStatus";
 import { KitchenClosedOverlay } from "@/components/breakfast/KitchenClosedOverlay";
 import { MenuItemCard } from "@/components/breakfast/MenuItemCard";
 import { OrderSuccess } from "@/components/breakfast/OrderSuccess";
 import { formatPrice, formatHour, isKitchenCurrentlyOpen } from "@/components/breakfast/utils";
+import { Switch } from "@/components/ui/switch";
+
+const PROFILE_STORAGE_KEY = "breakfast_profile";
+const FAVOURITES_STORAGE_KEY = "breakfast_favourites";
+
+interface SavedProfile {
+  residentName: string;
+  flatNumber: string;
+  mobileNumber: string;
+  address: string;
+  dietaryFlags: DietaryFlag[];
+}
 
 function getCategoryIcon(category: string) {
   switch (category) {
@@ -106,10 +122,40 @@ export default function HomePage() {
   const [deliveryMethod, setDeliveryMethod] = useState<"delivery" | "collection">("collection");
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "donation">("cash");
   const [notes, setNotes] = useState("");
+  const [dietaryFlags, setDietaryFlags] = useState<DietaryFlag[]>([]);
   const [isScheduled, setIsScheduled] = useState(false);
   const [scheduledSlot, setScheduledSlot] = useState("");
+  const [saveProfile, setSaveProfile] = useState(true);
+  const [favouriteIds, setFavouriteIds] = useState<Set<string>>(new Set());
 
-  // Pre-fill name from session
+  // Load saved profile and favourites on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(PROFILE_STORAGE_KEY);
+      if (saved) {
+        const profile: SavedProfile = JSON.parse(saved);
+        setResidentName(profile.residentName || "");
+        setFlatNumber(profile.flatNumber || "");
+        setMobileNumber(profile.mobileNumber || "");
+        setAddress(profile.address || "");
+        setDietaryFlags(profile.dietaryFlags || []);
+        setNamePreFilled(true); // Prevent session override
+      }
+    } catch {
+      // Ignore parse errors
+    }
+    
+    try {
+      const savedFavourites = localStorage.getItem(FAVOURITES_STORAGE_KEY);
+      if (savedFavourites) {
+        setFavouriteIds(new Set(JSON.parse(savedFavourites)));
+      }
+    } catch {
+      // Ignore parse errors
+    }
+  }, []);
+
+  // Pre-fill name from session (only if no saved profile)
   const [namePreFilled, setNamePreFilled] = useState(false);
   useEffect(() => {
     if (session?.user?.name && !namePreFilled && !residentName) {
@@ -181,6 +227,20 @@ export default function HomePage() {
     });
   }, [extras]);
 
+  const toggleFavourite = useCallback((itemId: string) => {
+    setFavouriteIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(itemId)) {
+        next.delete(itemId);
+      } else {
+        next.add(itemId);
+      }
+      // Save to localStorage
+      localStorage.setItem(FAVOURITES_STORAGE_KEY, JSON.stringify(Array.from(next)));
+      return next;
+    });
+  }, []);
+
   const cartItems = useMemo(() => Array.from(cart.values()), [cart]);
   const extrasItems = useMemo(() => Array.from(extras.values()), [extras]);
   const cartCount = useMemo(() => cartItems.reduce((sum, ci) => sum + ci.quantity, 0), [cartItems]);
@@ -246,19 +306,31 @@ export default function HomePage() {
         address: address.trim() || undefined,
         delivery_method: deliveryMethod,
         notes: notes.trim() || undefined,
+        dietary_flags: dietaryFlags.length > 0 ? dietaryFlags : undefined,
         payment_method: paymentMethod,
         items: cartItems.map((ci) => ({ menu_item_id: ci.menuItem.id, quantity: ci.quantity })),
         extras: extrasItems.map((ex) => ({ menu_item_id: ex.menuItem.id, quantity: ex.quantity })),
         scheduled_for: scheduledFor,
       });
+
+      // Save profile if enabled
+      if (saveProfile) {
+        const profile: SavedProfile = {
+          residentName: residentName.trim(),
+          flatNumber: flatNumber.trim(),
+          mobileNumber: mobileNumber.trim(),
+          address: address.trim(),
+          dietaryFlags,
+        };
+        localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
+      }
+
       setSuccessOrder(order);
       setSheetOpen(false);
       setCart(new Map());
       setExtras(new Map());
-      setResidentName("");
-      setFlatNumber("");
-      setMobileNumber("");
-      setAddress("");
+      // Keep profile fields populated for next order (name, flat, mobile, address, dietary flags)
+      // Only reset per-order fields
       setDeliveryMethod("collection");
       setPaymentMethod("cash");
       setNotes("");
@@ -315,6 +387,31 @@ export default function HomePage() {
 
       {menuItems && (
         <div className="space-y-6" role="list" aria-label="Menu categories">
+          {/* Favourites Section */}
+          {favouriteIds.size > 0 && mainMenuItems.filter(item => favouriteIds.has(item.id)).length > 0 && (
+            <section aria-label="Your Favourites">
+              <div className="flex items-center gap-2 mb-3">
+                <Heart className="h-4 w-4 text-red-500 fill-red-500" />
+                <h2 className="text-lg font-bold">Your Favourites</h2>
+              </div>
+              <div className="space-y-3" role="list">
+                {mainMenuItems
+                  .filter(item => favouriteIds.has(item.id))
+                  .map((item) => (
+                    <MenuItemCard
+                      key={`fav-${item.id}`}
+                      item={item}
+                      quantity={cart.get(item.id)?.quantity ?? 0}
+                      onAdd={() => addToCart(item)}
+                      onRemove={() => removeFromCart(item.id)}
+                      disabled={!kitchenOpen}
+                      isFavourite={true}
+                      onToggleFavourite={() => toggleFavourite(item.id)}
+                    />
+                  ))}
+              </div>
+            </section>
+          )}
           {Array.from(groupedMenu.entries()).map(([category, items]) => (
             <section key={category} aria-label={`${category} items`}>
               <div className="flex items-center gap-2 mb-3">
@@ -331,6 +428,8 @@ export default function HomePage() {
                     onAdd={() => addToCart(item)}
                     onRemove={() => removeFromCart(item.id)}
                     disabled={!kitchenOpen}
+                    isFavourite={favouriteIds.has(item.id)}
+                    onToggleFavourite={() => toggleFavourite(item.id)}
                   />
                 ))}
               </div>
@@ -467,7 +566,21 @@ export default function HomePage() {
                 <Separator />
                 {/* Name */}
                 <div className="space-y-4">
-                  <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Your Details</h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Your Details</h3>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        id="save-profile"
+                        checked={saveProfile}
+                        onCheckedChange={setSaveProfile}
+                        className="data-[state=checked]:bg-amber-500"
+                      />
+                      <Label htmlFor="save-profile" className="text-xs text-muted-foreground flex items-center gap-1 cursor-pointer">
+                        <Save className="h-3 w-3" />
+                        Remember me
+                      </Label>
+                    </div>
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="resident-name">Name <span className="text-red-500">*</span></Label>
                     <Input id="resident-name" placeholder="Enter your name" value={residentName} onChange={(e) => setResidentName(e.target.value)} className="border-amber-200 focus-visible:ring-amber-400 h-12" aria-required="true" />
@@ -569,10 +682,49 @@ export default function HomePage() {
                   )}
                 </div>
                 <Separator />
+                {/* Dietary Requirements */}
+                <div className="space-y-3">
+                  <Label>Dietary Requirements (optional)</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {DIETARY_FLAGS.map((flag) => {
+                      const isSelected = dietaryFlags.includes(flag.value);
+                      return (
+                        <button
+                          key={flag.value}
+                          type="button"
+                          onClick={() => {
+                            setDietaryFlags((prev) =>
+                              isSelected
+                                ? prev.filter((f) => f !== flag.value)
+                                : [...prev, flag.value]
+                            );
+                          }}
+                          className={`flex items-center gap-2 p-3 rounded-lg border text-sm transition-colors ${
+                            isSelected
+                              ? flag.alertLevel === 'warning'
+                                ? 'border-red-400 bg-red-50 text-red-800'
+                                : 'border-amber-400 bg-amber-50 text-amber-800'
+                              : 'border-gray-200 bg-white hover:border-amber-200'
+                          }`}
+                        >
+                          <span className="text-lg">{flag.icon}</span>
+                          <span className="font-medium">{flag.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {dietaryFlags.some(f => ['nut_allergy', 'gluten_free', 'dairy_free'].includes(f)) && (
+                    <p className="text-xs text-red-600 flex items-center gap-1">
+                      <span>⚠️</span>
+                      Kitchen staff will be alerted about allergy requirements
+                    </p>
+                  )}
+                </div>
+                <Separator />
                 {/* Notes */}
                 <div className="space-y-2">
                   <Label htmlFor="notes">Special Notes (optional)</Label>
-                  <Textarea id="notes" placeholder="Any allergies, preferences, or special requests..." value={notes} onChange={(e) => setNotes(e.target.value)} className="border-amber-200 focus-visible:ring-amber-400 resize-none" rows={3} />
+                  <Textarea id="notes" placeholder="Any other preferences or special requests..." value={notes} onChange={(e) => setNotes(e.target.value)} className="border-amber-200 focus-visible:ring-amber-400 resize-none" rows={3} />
                 </div>
                 {/* Submit */}
                 <Button onClick={handleSubmitOrder} disabled={submitting} className="w-full h-14 text-lg font-bold rounded-xl bg-amber-500 hover:bg-amber-600 text-white touch-target" size="lg" aria-label={submitting ? "Placing order" : `Place order for ${formatPrice(cartTotal)}`}>

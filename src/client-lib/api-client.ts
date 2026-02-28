@@ -1,6 +1,6 @@
 import axios from "axios";
 import useSWR, { mutate } from "swr";
-import type { MenuItem, OrderWithItems, KitchenSettings, OrderStats, OrderFeedback, FeedbackStats } from "@/shared/models/breakfast";
+import type { MenuItem, OrderWithItems, KitchenSettings, OrderStats, OrderFeedback, FeedbackStats, DietaryFlag } from "@/shared/models/breakfast";
 
 export const apiClient = axios.create({
   baseURL: "/api",
@@ -35,8 +35,12 @@ export async function updateSettings(data: Partial<KitchenSettings>) {
   }
 }
 
-export function useOrderStats() {
-  return useSWR<OrderStats, Error>('/orders/stats', fetcher, { refreshInterval: 30000 });
+export function useOrderStats(range: 'today' | 'week' | 'month' | 'all' = 'today') {
+  return useSWR<OrderStats & { orders_by_day?: Array<{ date: string; count: number; revenue: number }> }, Error>(
+    `/orders/stats?range=${range}`,
+    fetcher,
+    { refreshInterval: 30000 }
+  );
 }
 
 export function useOrder(id: string | null) {
@@ -71,6 +75,7 @@ export async function createOrder(data: {
   address?: string;
   delivery_method: string;
   notes?: string;
+  dietary_flags?: DietaryFlag[];
   payment_method: string;
   items: Array<{ menu_item_id: string; quantity: number }>;
   extras?: Array<{ menu_item_id: string; quantity: number }>;

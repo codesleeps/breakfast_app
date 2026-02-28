@@ -49,6 +49,7 @@ import {
   AlertCircle,
   Loader2,
   ImageIcon,
+  Clock,
 } from "lucide-react";
 import { KitchenSettingsPanel } from "@/components/breakfast/KitchenSettingsPanel";
 
@@ -70,6 +71,7 @@ interface MenuItemFormData {
   image_url: string;
   available: boolean;
   sort_order: string;
+  prep_time_minutes: string;
 }
 
 const EMPTY_FORM: MenuItemFormData = {
@@ -80,6 +82,7 @@ const EMPTY_FORM: MenuItemFormData = {
   image_url: "",
   available: true,
   sort_order: "0",
+  prep_time_minutes: "5",
 };
 
 function menuItemToForm(item: MenuItem): MenuItemFormData {
@@ -91,6 +94,7 @@ function menuItemToForm(item: MenuItem): MenuItemFormData {
     image_url: item.image_url ?? "",
     available: item.available,
     sort_order: String(item.sort_order),
+    prep_time_minutes: String(item.prep_time_minutes ?? 5),
   };
 }
 
@@ -137,6 +141,7 @@ function MenuManagementContent() {
 
     const pricePence = Math.round(priceNum * 100);
     const sortOrder = parseInt(form.sort_order, 10) || 0;
+    const prepTime = parseInt(form.prep_time_minutes, 10) || 5;
 
     setSaving(true);
     try {
@@ -148,6 +153,7 @@ function MenuManagementContent() {
         image_url: form.image_url.trim() || null,
         available: form.available,
         sort_order: sortOrder,
+        prep_time_minutes: prepTime,
       };
 
       if (editingItem) {
@@ -258,6 +264,7 @@ function MenuManagementContent() {
                   <TableHead>Name</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead className="text-right">Price</TableHead>
+                  <TableHead className="text-center">Prep</TableHead>
                   <TableHead className="text-center">Available</TableHead>
                   <TableHead className="text-center">Order</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -302,6 +309,12 @@ function MenuManagementContent() {
                     </TableCell>
                     <TableCell className="text-right font-mono">
                       {formatPrice(item.price_pence)}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        {item.prep_time_minutes ?? 5}m
+                      </div>
                     </TableCell>
                     <TableCell className="text-center">
                       <Switch
@@ -400,23 +413,38 @@ function MenuManagementContent() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="item-category">Category *</Label>
-                <Select
-                  value={form.category}
-                  onValueChange={(val) =>
-                    setForm((f) => ({ ...f, category: val }))
+                <Label htmlFor="item-prep">Prep Time (min)</Label>
+                <Input
+                  id="item-prep"
+                  type="number"
+                  min="1"
+                  max="60"
+                  value={form.prep_time_minutes}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, prep_time_minutes: e.target.value }))
                   }
-                >
-                  <SelectTrigger id="item-category">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Hot">Hot</SelectItem>
-                    <SelectItem value="Light">Light</SelectItem>
-                    <SelectItem value="Drinks">Drinks</SelectItem>
-                  </SelectContent>
-                </Select>
+                  placeholder="5"
+                />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="item-category">Category *</Label>
+              <Select
+                value={form.category}
+                onValueChange={(val) =>
+                  setForm((f) => ({ ...f, category: val }))
+                }
+              >
+                <SelectTrigger id="item-category">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Hot">Hot</SelectItem>
+                  <SelectItem value="Light">Light</SelectItem>
+                  <SelectItem value="Drinks">Drinks</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">

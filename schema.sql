@@ -58,7 +58,8 @@ CREATE TABLE IF NOT EXISTS menu_items (
     image_url TEXT,
     available BOOLEAN DEFAULT true,
     sort_order INTEGER DEFAULT 0,
-    is_extra BOOLEAN DEFAULT false
+    is_extra BOOLEAN DEFAULT false,
+    prep_time_minutes INTEGER DEFAULT 5
 );
 
 -- Orders table
@@ -70,6 +71,7 @@ CREATE TABLE IF NOT EXISTS orders (
     address TEXT,
     delivery_method TEXT NOT NULL CHECK (delivery_method IN ('delivery', 'collection')),
     notes TEXT,
+    dietary_flags TEXT[], -- Array of dietary requirements: vegetarian, vegan, gluten_free, nut_allergy, dairy_free, halal
     status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'preparing', 'ready', 'delivered', 'cancelled')),
     payment_method TEXT NOT NULL CHECK (payment_method IN ('cash', 'card', 'donation')),
     total_pence INTEGER NOT NULL,
@@ -86,7 +88,8 @@ CREATE TABLE IF NOT EXISTS order_items (
     menu_item_id TEXT NOT NULL,
     quantity INTEGER NOT NULL CHECK (quantity > 0),
     item_name TEXT NOT NULL,
-    item_price_pence INTEGER NOT NULL
+    item_price_pence INTEGER NOT NULL,
+    item_prep_time_minutes INTEGER DEFAULT 5
 );
 
 -- Kitchen settings table

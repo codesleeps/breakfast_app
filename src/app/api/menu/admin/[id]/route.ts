@@ -2,7 +2,7 @@ import { queryInternalDatabase } from '@/server-lib/internal-db-query';
 import { NextResponse } from 'next/server';
 import type { MenuItem } from '@/shared/models/breakfast';
 
-const VALID_CATEGORIES = ['Hot', 'Light', 'Drinks'];
+const VALID_CATEGORIES = ['Hot', 'Light', 'Drinks', 'Extras'];
 
 const ALLOWED_FIELDS: Record<string, string> = {
   name: 'text',
@@ -12,6 +12,7 @@ const ALLOWED_FIELDS: Record<string, string> = {
   image_url: 'text',
   available: 'boolean',
   sort_order: 'number',
+  prep_time_minutes: 'number',
 };
 
 export async function PATCH(

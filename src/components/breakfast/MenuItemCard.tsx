@@ -3,7 +3,7 @@
 import type { MenuItem } from "@/shared/models/breakfast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Minus } from "lucide-react";
+import { Plus, Minus, Heart } from "lucide-react";
 import { formatPrice } from "./utils";
 
 export function MenuItemCard({
@@ -12,12 +12,16 @@ export function MenuItemCard({
   onAdd,
   onRemove,
   disabled,
+  isFavourite,
+  onToggleFavourite,
 }: {
   item: MenuItem;
   quantity: number;
   onAdd: () => void;
   onRemove: () => void;
   disabled?: boolean;
+  isFavourite?: boolean;
+  onToggleFavourite?: () => void;
 }) {
   return (
     <Card className="overflow-hidden border-amber-100 transition-shadow hover:shadow-md">
@@ -30,15 +34,49 @@ export function MenuItemCard({
               className="absolute inset-0 w-full h-full object-cover"
               loading="lazy"
             />
+            {onToggleFavourite && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleFavourite();
+                }}
+                className={`absolute top-1 right-1 p-1.5 rounded-full transition-colors ${
+                  isFavourite
+                    ? "bg-red-500 text-white"
+                    : "bg-white/80 text-gray-400 hover:text-red-500"
+                }`}
+                aria-label={isFavourite ? `Remove ${item.name} from favourites` : `Add ${item.name} to favourites`}
+              >
+                <Heart className={`h-4 w-4 ${isFavourite ? "fill-current" : ""}`} />
+              </button>
+            )}
           </div>
         )}
         <CardContent className="p-3 flex-1 min-w-0 flex flex-col justify-between">
-          <div>
-            <h3 className="font-semibold text-base leading-tight">{item.name}</h3>
-            {item.description && (
-              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
-                {item.description}
-              </p>
+          <div className="flex items-start justify-between gap-1">
+            <div>
+              <h3 className="font-semibold text-base leading-tight">{item.name}</h3>
+              {item.description && (
+                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                  {item.description}
+                </p>
+              )}
+            </div>
+            {!item.image_url && onToggleFavourite && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleFavourite();
+                }}
+                className={`p-1.5 rounded-full transition-colors shrink-0 ${
+                  isFavourite
+                    ? "text-red-500"
+                    : "text-gray-300 hover:text-red-500"
+                }`}
+                aria-label={isFavourite ? `Remove ${item.name} from favourites` : `Add ${item.name} to favourites`}
+              >
+                <Heart className={`h-4 w-4 ${isFavourite ? "fill-current" : ""}`} />
+              </button>
             )}
           </div>
           <div className="flex items-center justify-between mt-2 gap-2">

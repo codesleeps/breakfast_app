@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useOrders, updateOrderStatus } from "@/client-lib/api-client";
 import type { OrderWithItems } from "@/shared/models/breakfast";
+import { DIETARY_FLAGS } from "@/shared/models/breakfast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,10 +25,37 @@ import {
   Printer,
   Phone,
   Sparkles,
+  LayoutGrid,
+  Building2,
+  AlertTriangle,
 } from "lucide-react";
 
 function formatPrice(pence: number): string {
   return `£${(pence / 100).toFixed(2)}`;
+}
+
+function calculatePrepTime(order: OrderWithItems): number {
+  // Take the max prep time from items (parallel cooking) + small buffer per extra item
+  let maxPrepTime = 0;
+  let itemCount = 0;
+  
+  for (const item of order.items) {
+    const prepTime = item.item_prep_time_minutes ?? 5;
+    if (prepTime > maxPrepTime) maxPrepTime = prepTime;
+    itemCount += item.quantity;
+  }
+  
+  if (order.extras) {
+    for (const extra of order.extras) {
+      const prepTime = (extra as unknown as { item_prep_time_minutes?: number }).item_prep_time_minutes ?? 3;
+      if (prepTime > maxPrepTime) maxPrepTime = prepTime;
+      itemCount += extra.quantity;
+    }
+  }
+  
+  // Add 1 min for every 3 items over 2 (parallel cooking overhead)
+  const overheadMins = itemCount > 2 ? Math.ceil((itemCount - 2) / 3) : 0;
+  return maxPrepTime + overheadMins;
 }
 
 function timeAgo(dateStr: string): string {
@@ -144,6 +172,7 @@ function OrderCard({
 }) {
   const [updating, setUpdating] = useState<string | null>(null);
   const status = order.status as OrderStatus;
+  const estimatedPrepTime = calculatePrepTime(order);
 
   const handleStatusChange = async (newStatus: string) => {
     setUpdating(newStatus);
@@ -181,6 +210,12 @@ function OrderCard({
         </div>
         <div className="flex items-center gap-2 flex-wrap mt-1">
           <span className="text-xs text-muted-foreground">{timeAgo(order.created_at)}</span>
+          {(status === "pending" || status === "preparing") && (
+            <Badge variant="outline" className="text-xs gap-1 bg-orange-50 text-orange-700 border-orange-200">
+              <Clock className="h-3 w-3" />
+              ~{estimatedPrepTime} min
+            </Badge>
+          )}
           {order.flat_number && (
             <Badge variant="secondary" className="text-xs">
               Flat {order.flat_number}
@@ -200,6 +235,46 @@ function OrderCard({
             <p className="text-xs text-blue-800">
               <span className="font-semibold">📍 Address:</span> {order.address}
             </p>
+          </div>
+        )}
+        {/* Dietary Flags Alert */}
+        {order.dietary_flags && order.dietary_flags.length > 0 && (
+          <div className={`mt-2 p-2 rounded-md border ${
+            order.dietary_flags.some(f => ['nut_allergy', 'gluten_free', 'dairy_free'].includes(f))
+              ? 'bg-red-50 border-red-300'
+              : 'bg-yellow-50 border-yellow-300'
+          }`}>
+            <div className="flex items-center gap-1.5 mb-1">
+              {order.dietary_flags.some(f => ['nut_allergy', 'gluten_free', 'dairy_free'].includes(f)) && (
+                <AlertTriangle className="h-4 w-4 text-red-600" />
+              )}
+              <span className={`text-xs font-bold ${
+                order.dietary_flags.some(f => ['nut_allergy', 'gluten_free', 'dairy_free'].includes(f))
+                  ? 'text-red-700'
+                  : 'text-yellow-700'
+              }`}>
+                Dietary Requirements:
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {order.dietary_flags.map(flag => {
+                const flagInfo = DIETARY_FLAGS.find(f => f.value === flag);
+                if (!flagInfo) return null;
+                return (
+                  <Badge
+                    key={flag}
+                    variant="outline"
+                    className={`text-xs ${
+                      flagInfo.alertLevel === 'warning'
+                        ? 'bg-red-100 text-red-800 border-red-300'
+                        : 'bg-yellow-100 text-yellow-800 border-yellow-300'
+                    }`}
+                  >
+                    {flagInfo.icon} {flagInfo.label}
+                  </Badge>
+                );
+              })}
+            </div>
           </div>
         )}
       </CardHeader>
@@ -478,6 +553,7 @@ export default function KitchenDashboard() {
 
 function KitchenDashboardContent() {
   const [activeTab, setActiveTab] = useState("all");
+  const [viewMode, setViewMode] = useState<"status" | "delivery">("status");
   const statusFilter = activeTab === "all" ? undefined : activeTab;
   const { data: orders, isLoading, error } = useOrders(statusFilter);
   // Also fetch all orders (unfiltered) for printing
@@ -519,6 +595,36 @@ function KitchenDashboardContent() {
   // But for "all" tab, we show everything
   const displayOrders = orders ?? [];
 
+  // Group orders by flat number for delivery view
+  const activeDeliveryOrders = (allOrders ?? []).filter(
+    (o) => o.delivery_method === "delivery" && 
+           o.status !== "delivered" && 
+           o.status !== "cancelled"
+  );
+  
+  const collectionOrders = (allOrders ?? []).filter(
+    (o) => o.delivery_method === "collection" && 
+           o.status !== "delivered" && 
+           o.status !== "cancelled"
+  );
+
+  const ordersByFlat: Record<string, OrderWithItems[]> = {};
+  for (const order of activeDeliveryOrders) {
+    const flat = order.flat_number || "No Flat";
+    if (!ordersByFlat[flat]) ordersByFlat[flat] = [];
+    ordersByFlat[flat]!.push(order);
+  }
+  
+  // Sort flats naturally (1, 2, 10, 11, etc.)
+  const sortedFlats = Object.keys(ordersByFlat).sort((a, b) => {
+    if (a === "No Flat") return 1;
+    if (b === "No Flat") return -1;
+    const numA = parseInt(a, 10);
+    const numB = parseInt(b, 10);
+    if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+    return a.localeCompare(b);
+  });
+
   return (
     <>
       <div className="max-w-6xl mx-auto print:hidden">
@@ -534,6 +640,26 @@ function KitchenDashboardContent() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <div className="flex border rounded-lg overflow-hidden">
+              <Button
+                variant={viewMode === "status" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("status")}
+                className="rounded-none gap-1.5"
+              >
+                <LayoutGrid className="h-4 w-4" />
+                <span className="hidden sm:inline">Status</span>
+              </Button>
+              <Button
+                variant={viewMode === "delivery" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("delivery")}
+                className="rounded-none gap-1.5"
+              >
+                <Building2 className="h-4 w-4" />
+                <span className="hidden sm:inline">By Flat</span>
+              </Button>
+            </div>
             <Button
               variant="outline"
               size="sm"
@@ -551,26 +677,28 @@ function KitchenDashboardContent() {
         {/* Daily Stats */}
         <DailyStats />
 
-        {/* Tab Filters */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-          <TabsList className="grid w-full grid-cols-5 max-w-xl">
-            <TabsTrigger value="all" className="text-xs sm:text-sm">
-              All ({orderCounts.all})
-            </TabsTrigger>
-            <TabsTrigger value="pending" className="text-xs sm:text-sm">
-              Pending ({orderCounts.pending})
-            </TabsTrigger>
-            <TabsTrigger value="preparing" className="text-xs sm:text-sm">
-              Preparing ({orderCounts.preparing})
-            </TabsTrigger>
-            <TabsTrigger value="ready" className="text-xs sm:text-sm">
-              Ready ({orderCounts.ready})
-            </TabsTrigger>
-            <TabsTrigger value="delivered" className="text-xs sm:text-sm">
-              Done ({orderCounts.delivered})
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        {/* Tab Filters - only show in status view */}
+        {viewMode === "status" && (
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+            <TabsList className="grid w-full grid-cols-5 max-w-xl">
+              <TabsTrigger value="all" className="text-xs sm:text-sm">
+                All ({orderCounts.all})
+              </TabsTrigger>
+              <TabsTrigger value="pending" className="text-xs sm:text-sm">
+                Pending ({orderCounts.pending})
+              </TabsTrigger>
+              <TabsTrigger value="preparing" className="text-xs sm:text-sm">
+                Preparing ({orderCounts.preparing})
+              </TabsTrigger>
+              <TabsTrigger value="ready" className="text-xs sm:text-sm">
+                Ready ({orderCounts.ready})
+              </TabsTrigger>
+              <TabsTrigger value="delivered" className="text-xs sm:text-sm">
+                Done ({orderCounts.delivered})
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        )}
 
         {/* Loading */}
         {isLoading && (
@@ -592,7 +720,7 @@ function KitchenDashboardContent() {
         )}
 
         {/* Empty State */}
-        {!isLoading && !error && displayOrders.length === 0 && (
+        {!isLoading && !error && viewMode === "status" && displayOrders.length === 0 && (
           <Card className="border-dashed">
             <CardContent className="p-12 text-center">
               <ChefHat className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
@@ -608,8 +736,8 @@ function KitchenDashboardContent() {
           </Card>
         )}
 
-        {/* Orders Grid */}
-        {!isLoading && displayOrders.length > 0 && (
+        {/* Status View - Orders Grid */}
+        {!isLoading && viewMode === "status" && displayOrders.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {displayOrders.map((order) => (
               <OrderCard
@@ -618,6 +746,108 @@ function KitchenDashboardContent() {
                 onStatusUpdate={handleStatusUpdate}
               />
             ))}
+          </div>
+        )}
+
+        {/* Delivery View - Grouped by Flat */}
+        {!isLoading && viewMode === "delivery" && (
+          <div className="space-y-6">
+            {/* Summary header */}
+            <div className="flex items-center gap-4 p-4 bg-amber-50 rounded-lg border border-amber-200">
+              <Truck className="h-8 w-8 text-amber-600" />
+              <div>
+                <h2 className="font-bold text-lg">Delivery Round</h2>
+                <p className="text-sm text-muted-foreground">
+                  {activeDeliveryOrders.length} deliveries across {sortedFlats.length} flats
+                  {collectionOrders.length > 0 && ` · ${collectionOrders.length} collections`}
+                </p>
+              </div>
+            </div>
+
+            {/* No deliveries */}
+            {activeDeliveryOrders.length === 0 && collectionOrders.length === 0 && (
+              <Card className="border-dashed">
+                <CardContent className="p-12 text-center">
+                  <Building2 className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-muted-foreground">
+                    All caught up!
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    No pending deliveries or collections right now.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Grouped by Flat */}
+            {sortedFlats.map((flat) => {
+              const flatOrders = ordersByFlat[flat]!;
+              const pendingCount = flatOrders.filter(o => o.status === "pending").length;
+              const preparingCount = flatOrders.filter(o => o.status === "preparing").length;
+              const readyCount = flatOrders.filter(o => o.status === "ready").length;
+              
+              return (
+                <div key={flat} className="border rounded-lg overflow-hidden">
+                  <div className="bg-slate-100 px-4 py-3 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Building2 className="h-5 w-5 text-slate-600" />
+                      <span className="font-bold text-lg">Flat {flat}</span>
+                      <Badge variant="secondary" className="text-xs">
+                        {flatOrders.length} order{flatOrders.length !== 1 ? "s" : ""}
+                      </Badge>
+                    </div>
+                    <div className="flex gap-2">
+                      {pendingCount > 0 && (
+                        <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300">
+                          {pendingCount} pending
+                        </Badge>
+                      )}
+                      {preparingCount > 0 && (
+                        <Badge className="bg-blue-100 text-blue-800 border-blue-300">
+                          {preparingCount} preparing
+                        </Badge>
+                      )}
+                      {readyCount > 0 && (
+                        <Badge className="bg-green-100 text-green-800 border-green-300">
+                          {readyCount} ready
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+                    {flatOrders.map((order) => (
+                      <OrderCard
+                        key={order.id}
+                        order={order}
+                        onStatusUpdate={handleStatusUpdate}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Collection Orders Section */}
+            {collectionOrders.length > 0 && (
+              <div className="border rounded-lg overflow-hidden">
+                <div className="bg-blue-50 px-4 py-3 flex items-center gap-3">
+                  <Package className="h-5 w-5 text-blue-600" />
+                  <span className="font-bold text-lg">Collections</span>
+                  <Badge variant="secondary" className="text-xs">
+                    {collectionOrders.length} order{collectionOrders.length !== 1 ? "s" : ""}
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+                  {collectionOrders.map((order) => (
+                    <OrderCard
+                      key={order.id}
+                      order={order}
+                      onStatusUpdate={handleStatusUpdate}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

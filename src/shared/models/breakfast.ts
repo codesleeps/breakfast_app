@@ -8,7 +8,19 @@ export interface MenuItem {
   available: boolean;
   sort_order: number;
   is_extra?: boolean;  // true for extras/add-ons
+  prep_time_minutes?: number;  // estimated preparation time in minutes
 }
+
+export type DietaryFlag = 'vegetarian' | 'vegan' | 'gluten_free' | 'nut_allergy' | 'dairy_free' | 'halal';
+
+export const DIETARY_FLAGS: { value: DietaryFlag; label: string; icon: string; alertLevel: 'info' | 'warning' }[] = [
+  { value: 'vegetarian', label: 'Vegetarian', icon: '🥬', alertLevel: 'info' },
+  { value: 'vegan', label: 'Vegan', icon: '🌱', alertLevel: 'info' },
+  { value: 'gluten_free', label: 'Gluten Free', icon: '🌾', alertLevel: 'warning' },
+  { value: 'nut_allergy', label: 'Nut Allergy', icon: '🥜', alertLevel: 'warning' },
+  { value: 'dairy_free', label: 'Dairy Free', icon: '🥛', alertLevel: 'warning' },
+  { value: 'halal', label: 'Halal', icon: '☪️', alertLevel: 'info' },
+];
 
 export interface Order {
   id: string;
@@ -18,6 +30,7 @@ export interface Order {
   address: string | null;
   delivery_method: 'delivery' | 'collection';
   notes: string | null;
+  dietary_flags?: DietaryFlag[] | null;
   status: 'pending' | 'preparing' | 'ready' | 'delivered' | 'cancelled';
   payment_method: 'cash' | 'card' | 'donation';
   total_pence: number;
@@ -34,6 +47,7 @@ export interface OrderItem {
   quantity: number;
   item_name: string;
   item_price_pence: number;
+  item_prep_time_minutes?: number;
 }
 
 export interface OrderWithItems extends Order {
