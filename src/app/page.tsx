@@ -55,6 +55,13 @@ interface SavedProfile {
   dietaryFlags: DietaryFlag[];
 }
 
+function getGreeting(): { text: string; emoji: string } {
+  const hour = new Date().getHours();
+  if (hour < 12) return { text: "Good Morning", emoji: "☀️" };
+  if (hour < 17) return { text: "Good Afternoon", emoji: "🌤️" };
+  return { text: "Good Evening", emoji: "🌙" };
+}
+
 function getCategoryIcon(category: string) {
   switch (category) {
     case "Hot":
@@ -359,7 +366,7 @@ export default function HomePage() {
     <div className="max-w-2xl mx-auto pb-28">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-1">☀️ Good Morning!</h1>
+        <h1 className="text-3xl font-bold mb-1">{getGreeting().emoji} {getGreeting().text}!</h1>
         <p className="text-muted-foreground text-sm mb-2">Aston Breakfast Club · Birmingham</p>
         <div className="flex items-center justify-between flex-wrap gap-2">
           <ServiceStatus settings={settings} />
