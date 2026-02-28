@@ -91,6 +91,7 @@
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7",
     "tiptap": "^1.32.2",
+    "web-push": "^3.6.7",
     "ws": "^8.19.0",
     "zod": "^3.24.2"
   },

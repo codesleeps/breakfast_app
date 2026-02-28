@@ -111,9 +111,9 @@ export async function GET(request: Request) {
     const statusFilter = searchParams.get('status');
 
     let orderQuery = `
-      SELECT id, resident_name, flat_number, mobile_number, address, delivery_method, notes, status, payment_method, total_pence, created_at, updated_at
+      SELECT id, resident_name, flat_number, mobile_number, address, delivery_method, notes, status, payment_method, total_pence, scheduled_for, created_at, updated_at
       FROM orders
-      WHERE created_at >= CURRENT_DATE
+      WHERE created_at >= CURRENT_DATE OR (scheduled_for IS NOT NULL AND scheduled_for >= CURRENT_DATE)
     `;
     const params: (string | string[])[] = [];
 
@@ -170,6 +170,7 @@ function createDemoOrder(data: {
   payment_method: 'cash' | 'card' | 'donation';
   items: Array<{ menu_item_id: string; quantity: number }>;
   extras?: Array<{ menu_item_id: string; quantity: number }>;
+  scheduled_for?: string | null;
 }): OrderWithItems {
   let totalPence = 0;
   const orderItems: OrderItem[] = [];
@@ -221,6 +222,7 @@ function createDemoOrder(data: {
     status: 'pending',
     payment_method: data.payment_method,
     total_pence: totalPence,
+    scheduled_for: data.scheduled_for || null,
     created_at: now,
     updated_at: now,
     items: orderItems,
@@ -233,7 +235,7 @@ function createDemoOrder(data: {
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { resident_name, flat_number, mobile_number, address, delivery_method, notes, payment_method, items, extras } = body;
+  const { resident_name, flat_number, mobile_number, address, delivery_method, notes, payment_method, items, extras, scheduled_for } = body;
 
   // Read session (optional - guest ordering allowed)
   let userId: string | null = null;
@@ -308,18 +310,22 @@ export async function POST(request: Request) {
       payment_method,
       items,
       extras,
+      scheduled_for,
     });
     return NextResponse.json(order, { status: 201 });
   }
 
   try {
-    // Check service hours
-    const kitchenStatus = await isKitchenOpen();
-    if (!kitchenStatus.open) {
-      return NextResponse.json(
-        { error: kitchenStatus.message ?? 'The kitchen is currently closed' },
-        { status: 403 }
-      );
+    // Check service hours (skip for scheduled orders)
+    const isScheduledOrder = scheduled_for && new Date(scheduled_for) > new Date();
+    if (!isScheduledOrder) {
+      const kitchenStatus = await isKitchenOpen();
+      if (!kitchenStatus.open) {
+        return NextResponse.json(
+          { error: kitchenStatus.message ?? 'The kitchen is currently closed' },
+          { status: 403 }
+        );
+      }
     }
 
     // Look up menu item prices from DB
@@ -353,9 +359,9 @@ export async function POST(request: Request) {
 
     // Insert order
     const orderRows = await queryInternalDatabase(
-      `INSERT INTO orders (id, resident_name, flat_number, mobile_number, address, delivery_method, notes, status, payment_method, total_pence, user_id, created_at, updated_at)
-       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9, NOW(), NOW())
-       RETURNING id, resident_name, flat_number, mobile_number, address, delivery_method, notes, status, payment_method, total_pence, user_id, created_at, updated_at`,
+      `INSERT INTO orders (id, resident_name, flat_number, mobile_number, address, delivery_method, notes, status, payment_method, total_pence, user_id, scheduled_for, created_at, updated_at)
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9, $10, NOW(), NOW())
+       RETURNING id, resident_name, flat_number, mobile_number, address, delivery_method, notes, status, payment_method, total_pence, user_id, scheduled_for, created_at, updated_at`,
       [
         resident_name.trim(),
         flat_number?.trim() || null,
@@ -366,6 +372,7 @@ export async function POST(request: Request) {
         payment_method,
         totalPence,
         userId,
+        scheduled_for || null,
       ]
     ) as unknown as Order[];
 

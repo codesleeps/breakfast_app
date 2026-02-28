@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { formatPrice } from "./utils";
 import { toast } from "sonner";
+import { PushNotificationButton } from "@/components/PushNotificationButton";
 
 function ProgressTracker({ status }: { status: string }) {
   const steps = [
@@ -185,6 +186,19 @@ export function OrderSuccess({
           </ol>
         </CardContent>
       </Card>
+
+      {/* Push Notifications */}
+      {currentOrder.status !== "delivered" && currentOrder.status !== "cancelled" && (
+        <Card className="w-full max-w-sm mb-4 bg-purple-50 border-purple-200">
+          <CardContent className="p-4 text-center">
+            <h3 className="font-semibold text-purple-900 mb-2 text-sm">Get notified</h3>
+            <p className="text-sm text-purple-700 mb-3">
+              We&apos;ll notify you when your order status changes
+            </p>
+            <PushNotificationButton orderId={currentOrder.id} className="w-full" />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Feedback Section */}
       {currentOrder.status === "delivered" && (

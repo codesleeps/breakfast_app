@@ -74,6 +74,7 @@ export async function createOrder(data: {
   payment_method: string;
   items: Array<{ menu_item_id: string; quantity: number }>;
   extras?: Array<{ menu_item_id: string; quantity: number }>;
+  scheduled_for?: string;
 }) {
   try {
     return await apiClient.post<OrderWithItems>('/orders', data).then(r => r.data);

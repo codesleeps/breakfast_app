@@ -22,6 +22,7 @@ export interface Order {
   payment_method: 'cash' | 'card' | 'donation';
   total_pence: number;
   user_id?: string | null;
+  scheduled_for?: string | null;
   created_at: string;
   updated_at: string;
 }

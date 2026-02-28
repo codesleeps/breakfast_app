@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS orders (
     payment_method TEXT NOT NULL CHECK (payment_method IN ('cash', 'card', 'donation')),
     total_pence INTEGER NOT NULL,
     user_id TEXT REFERENCES "user"(id) ON DELETE SET NULL,
+    scheduled_for TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -109,6 +110,20 @@ INSERT INTO kitchen_settings (key, value) VALUES
     ('service_start_hour', '8'),
     ('service_end_hour', '13')
 ON CONFLICT (key) DO NOTHING;
+
+-- Push subscriptions table for PWA notifications
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id TEXT REFERENCES "user"(id) ON DELETE CASCADE,
+    order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
+    endpoint TEXT NOT NULL UNIQUE,
+    p256dh TEXT NOT NULL,
+    auth TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user_id ON push_subscriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_order_id ON push_subscriptions(order_id);
 
 -- Insert sample menu items (optional - remove if you want to add via the admin UI)
 INSERT INTO menu_items (id, name, description, price_pence, category, image_url, available, sort_order, is_extra) VALUES

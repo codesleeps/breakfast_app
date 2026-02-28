@@ -31,6 +31,7 @@ import {
   Plus,
   Minus,
   Sparkles,
+  Clock,
 } from "lucide-react";
 import { ServiceStatus } from "@/components/breakfast/ServiceStatus";
 import { KitchenClosedOverlay } from "@/components/breakfast/KitchenClosedOverlay";
@@ -53,6 +54,41 @@ function getCategoryIcon(category: string) {
   }
 }
 
+function generateTimeSlots(): Array<{ value: string; label: string }> {
+  const slots: Array<{ value: string; label: string }> = [];
+  const now = new Date();
+  
+  // Generate slots for today and tomorrow
+  for (let dayOffset = 0; dayOffset <= 1; dayOffset++) {
+    const date = new Date(now);
+    date.setDate(date.getDate() + dayOffset);
+    
+    const dayLabel = dayOffset === 0 ? "Today" : "Tomorrow";
+    const dateStr = date.toISOString().split('T')[0];
+    
+    // Service hours: 8am to 1pm (13:00), slots every 30 minutes
+    for (let hour = 8; hour < 13; hour++) {
+      for (const minute of [0, 30]) {
+        const slotTime = new Date(date);
+        slotTime.setHours(hour, minute, 0, 0);
+        
+        // Skip slots that are in the past (need at least 30 min notice)
+        if (slotTime.getTime() < now.getTime() + 30 * 60 * 1000) continue;
+        
+        const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        const displayTime = slotTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        
+        slots.push({
+          value: `${dateStr}T${timeStr}`,
+          label: `${dayLabel} at ${displayTime}`,
+        });
+      }
+    }
+  }
+  
+  return slots;
+}
+
 export default function HomePage() {
   const { data: menuItems, isLoading, error } = useMenu();
   const { data: settings } = useSettings();
@@ -70,6 +106,8 @@ export default function HomePage() {
   const [deliveryMethod, setDeliveryMethod] = useState<"delivery" | "collection">("collection");
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "donation">("cash");
   const [notes, setNotes] = useState("");
+  const [isScheduled, setIsScheduled] = useState(false);
+  const [scheduledSlot, setScheduledSlot] = useState("");
 
   // Pre-fill name from session
   const [namePreFilled, setNamePreFilled] = useState(false);
@@ -188,9 +226,19 @@ export default function HomePage() {
     if (deliveryMethod === "delivery" && !flatNumber.trim()) { toast.error("Please enter your flat/room number for delivery"); return; }
     if (deliveryMethod === "delivery" && !address.trim()) { toast.error("Please enter your address for delivery"); return; }
     if (cartItems.length === 0) { toast.error("Your cart is empty"); return; }
+    if (isScheduled && !scheduledSlot) { toast.error("Please select a time slot for your scheduled order"); return; }
 
     setSubmitting(true);
     try {
+      // Calculate scheduled_for timestamp
+      let scheduledFor: string | undefined;
+      if (isScheduled && scheduledSlot) {
+        const [datePart, timePart] = scheduledSlot.split('T');
+        if (datePart && timePart) {
+          scheduledFor = new Date(scheduledSlot).toISOString();
+        }
+      }
+
       const order = await createOrder({
         resident_name: residentName.trim(),
         flat_number: flatNumber.trim() || undefined,
@@ -201,6 +249,7 @@ export default function HomePage() {
         payment_method: paymentMethod,
         items: cartItems.map((ci) => ({ menu_item_id: ci.menuItem.id, quantity: ci.quantity })),
         extras: extrasItems.map((ex) => ({ menu_item_id: ex.menuItem.id, quantity: ex.quantity })),
+        scheduled_for: scheduledFor,
       });
       setSuccessOrder(order);
       setSheetOpen(false);
@@ -213,6 +262,8 @@ export default function HomePage() {
       setDeliveryMethod("collection");
       setPaymentMethod("cash");
       setNotes("");
+      setIsScheduled(false);
+      setScheduledSlot("");
     } catch {
       toast.error("Failed to place order. Please try again.");
     } finally {
@@ -475,6 +526,47 @@ export default function HomePage() {
                       <Label htmlFor="donation" className="cursor-pointer flex-1">🤝 Donation Box</Label>
                     </div>
                   </RadioGroup>
+                </div>
+                <Separator />
+                {/* Scheduling */}
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">When do you want it?</h3>
+                  <RadioGroup value={isScheduled ? "scheduled" : "now"} onValueChange={(v) => setIsScheduled(v === "scheduled")} className="space-y-2" aria-label="Order timing">
+                    <div className="flex items-center space-x-3 p-3 rounded-lg border border-amber-100 hover:bg-amber-50 transition-colors min-h-[48px]">
+                      <RadioGroupItem value="now" id="order-now" className="h-5 w-5" />
+                      <Label htmlFor="order-now" className="flex items-center gap-2 cursor-pointer flex-1">
+                        <Sparkles className="h-4 w-4 text-amber-600" aria-hidden="true" />As soon as possible
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-3 p-3 rounded-lg border border-amber-100 hover:bg-amber-50 transition-colors min-h-[48px]">
+                      <RadioGroupItem value="scheduled" id="order-scheduled" className="h-5 w-5" />
+                      <Label htmlFor="order-scheduled" className="flex items-center gap-2 cursor-pointer flex-1">
+                        <Clock className="h-4 w-4 text-amber-600" aria-hidden="true" />Schedule for later
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                  {isScheduled && (
+                    <div className="space-y-3 pl-1">
+                      <Label htmlFor="scheduled-slot">Select a time slot <span className="text-red-500">*</span></Label>
+                      <select
+                        id="scheduled-slot"
+                        value={scheduledSlot}
+                        onChange={(e) => setScheduledSlot(e.target.value)}
+                        className="w-full h-12 px-3 rounded-md border border-amber-200 bg-white focus:outline-none focus:ring-2 focus:ring-amber-400"
+                        aria-required="true"
+                      >
+                        <option value="">Choose a time...</option>
+                        {generateTimeSlots().map((slot) => (
+                          <option key={slot.value} value={slot.value}>
+                            {slot.label}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-xs text-muted-foreground">
+                        Pre-orders are prepared fresh for your selected time slot
+                      </p>
+                    </div>
+                  )}
                 </div>
                 <Separator />
                 {/* Notes */}
