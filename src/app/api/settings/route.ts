@@ -38,7 +38,7 @@ export async function GET() {
     const settings: KitchenSettings = {
       service_days: serviceDays,
       service_start_hour: parseInt(settingsMap.get('service_start_hour') ?? '8', 10),
-      service_end_hour: parseInt(settingsMap.get('service_end_hour') ?? '11', 10),
+      service_end_hour: parseInt(settingsMap.get('service_end_hour') ?? '13', 10),
     };
 
     return NextResponse.json(settings);
@@ -71,8 +71,8 @@ export async function PATCH(request: Request) {
         }
       }
       await queryInternalDatabase(
-        'UPDATE kitchen_settings SET value = $1, updated_at = NOW() WHERE key = $2',
-        [JSON.stringify(service_days), 'service_days']
+        'INSERT INTO kitchen_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()',
+        ['service_days', JSON.stringify(service_days)]
       );
     }
 
@@ -82,8 +82,8 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ error: 'Invalid start hour' }, { status: 400 });
       }
       await queryInternalDatabase(
-        'UPDATE kitchen_settings SET value = $1, updated_at = NOW() WHERE key = $2',
-        [String(hour), 'service_start_hour']
+        'INSERT INTO kitchen_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()',
+        ['service_start_hour', String(hour)]
       );
     }
 
@@ -93,8 +93,8 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ error: 'Invalid end hour' }, { status: 400 });
       }
       await queryInternalDatabase(
-        'UPDATE kitchen_settings SET value = $1, updated_at = NOW() WHERE key = $2',
-        [String(hour), 'service_end_hour']
+        'INSERT INTO kitchen_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()',
+        ['service_end_hour', String(hour)]
       );
     }
 
@@ -119,7 +119,7 @@ export async function PATCH(request: Request) {
     const settings: KitchenSettings = {
       service_days: finalDays,
       service_start_hour: parseInt(settingsMap.get('service_start_hour') ?? '8', 10),
-      service_end_hour: parseInt(settingsMap.get('service_end_hour') ?? '11', 10),
+      service_end_hour: parseInt(settingsMap.get('service_end_hour') ?? '13', 10),
     };
 
     return NextResponse.json(settings);
