@@ -31,8 +31,10 @@ CREATE TABLE IF NOT EXISTS "account" (
     access_token TEXT,
     refresh_token TEXT,
     id_token TEXT,
-    expires_at TIMESTAMP WITH TIME ZONE,
+    access_token_expires_at TIMESTAMP WITH TIME ZONE,
+    refresh_token_expires_at TIMESTAMP WITH TIME ZONE,
     scope TEXT,
+    password TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
