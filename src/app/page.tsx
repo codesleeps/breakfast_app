@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useMenu, useSettings, createOrder } from "@/client-lib/api-client";
+import { getAuthClient } from "@/client-lib/auth-client";
 import type { MenuItem, CartItem, CartExtra, OrderWithItems } from "@/shared/models/breakfast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -55,6 +56,7 @@ function getCategoryIcon(category: string) {
 export default function HomePage() {
   const { data: menuItems, isLoading, error } = useMenu();
   const { data: settings } = useSettings();
+  const { data: session } = getAuthClient();
   const [cart, setCart] = useState<Map<string, CartItem>>(new Map());
   const [extras, setExtras] = useState<Map<string, CartExtra>>(new Map()); // Per-order extras
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -68,6 +70,15 @@ export default function HomePage() {
   const [deliveryMethod, setDeliveryMethod] = useState<"delivery" | "collection">("collection");
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "donation">("cash");
   const [notes, setNotes] = useState("");
+
+  // Pre-fill name from session
+  const [namePreFilled, setNamePreFilled] = useState(false);
+  useEffect(() => {
+    if (session?.user?.name && !namePreFilled && !residentName) {
+      setResidentName(session.user.name);
+      setNamePreFilled(true);
+    }
+  }, [session, namePreFilled, residentName]);
 
   const kitchenOpen = isKitchenCurrentlyOpen(settings);
 

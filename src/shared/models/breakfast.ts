@@ -21,6 +21,7 @@ export interface Order {
   status: 'pending' | 'preparing' | 'ready' | 'delivered' | 'cancelled';
   payment_method: 'cash' | 'card' | 'donation';
   total_pence: number;
+  user_id?: string | null;
   created_at: string;
   updated_at: string;
 }

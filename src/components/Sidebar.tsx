@@ -1,8 +1,8 @@
 "use client";
 
-import { ExternalLink, Menu } from "lucide-react";
+import { LogIn, Menu } from "lucide-react";
 import Link from "next/link";
-import { authClient, getAuthActiveOrganization, getAuthClient } from "@/client-lib/auth-client";
+import { authClient, getAuthClient } from "@/client-lib/auth-client";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -28,19 +28,22 @@ import {
 } from "@/components/ui/sidebar";
 import { NAV_LINKS } from "@/config/nav-links";
 
-const authUrl = process.env.NEXT_PUBLIC_AUTH_URL ?? "";
-
 export function Sidebar() {
   const { data: session } = getAuthClient();
-  const { data: activeOrganization } = getAuthActiveOrganization();
   const { state, isMobile, toggleSidebar } = useSidebar();
   const handleSignOut = async () => {
     await authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
-          window.location.href = `${authUrl}/login`;
+          window.location.href = "/";
         },
       },
+    });
+  };
+  const handleSignIn = () => {
+    authClient.signIn.social({
+      provider: "google",
+      callbackURL: "/",
     });
   };
   return (
@@ -83,7 +86,7 @@ export function Sidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      {session && (
+      {session ? (
         <SidebarFooter className="border-t border-sidebar-border">
           <SidebarMenu>
             <SidebarMenuItem>
@@ -106,28 +109,24 @@ export function Sidebar() {
                   <div className="px-2 py-1.5">
                     <p className="text-sm font-medium">{session.user.name ?? "User"}</p>
                     <p className="text-xs text-muted-foreground">{session.user.email}</p>
-                    {"phone" in session.user && session.user.phone && (
-                      <p className="text-xs text-muted-foreground">{session.user.phone}</p>
-                    )}
                   </div>
                   <DropdownMenuSeparator />
-                  <div className="px-2 py-1.5">
-                    <p className="text-xs font-medium text-muted-foreground">Organization</p>
-                    <p className="text-sm">{activeOrganization?.name ?? "No organization selected"}</p>
-                  </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="cursor-pointer"
-                    onClick={() => window.open(`${authUrl}/organizations`, "_blank")}
-                  >
-                    Manage organizations <ExternalLink className="ml-auto w-4 h-4" />
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem disabled={true} className="cursor-pointer" onClick={handleSignOut}>
+                  <DropdownMenuItem className="cursor-pointer" onClick={handleSignOut}>
                     <span className="text-destructive font-semibold">Log out</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
+      ) : (
+        <SidebarFooter className="border-t border-sidebar-border">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton size="lg" onClick={handleSignIn} className="cursor-pointer">
+                <LogIn className="h-5 w-5" />
+                <span>Sign in with Google</span>
+              </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarFooter>

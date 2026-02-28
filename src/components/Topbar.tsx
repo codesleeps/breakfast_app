@@ -1,8 +1,8 @@
 "use client";
 
-import { ExternalLink, Home } from "lucide-react";
+import { Home, LogIn } from "lucide-react";
 import Link from "next/link";
-import { authClient, getAuthActiveOrganization, getAuthClient } from "@/client-lib/auth-client";
+import { authClient, getAuthClient } from "@/client-lib/auth-client";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -13,19 +13,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const authUrl = process.env.NEXT_PUBLIC_AUTH_URL ?? "";
-
 export function Topbar() {
   const { data: session } = getAuthClient();
-  const { data: activeOrganization } = getAuthActiveOrganization();
 
   const handleSignOut = async () => {
     await authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
-          window.location.href = `${authUrl}/login`;
+          window.location.href = "/";
         },
       },
+    });
+  };
+
+  const handleSignIn = () => {
+    authClient.signIn.social({
+      provider: "google",
+      callbackURL: "/",
     });
   };
 
@@ -38,7 +42,7 @@ export function Topbar() {
           </Link>
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            {session && (
+            {session ? (
               <DropdownMenu>
                 <DropdownMenuTrigger className="outline-none">
                   <Avatar className="h-7 w-7">
@@ -54,29 +58,18 @@ export function Topbar() {
                       {session.user.name ?? "User"}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">{session.user.email}</p>
-                    {"phone" in session.user && session.user.phone && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{session.user.phone}</p>
-                    )}
                   </div>
                   <DropdownMenuSeparator />
-                  <div className="px-2 py-1.5">
-                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Organization</p>
-                    <p className="text-sm text-gray-900 dark:text-gray-100">
-                      {activeOrganization?.name ?? "No organization selected"}
-                    </p>
-                  </div>
-                  <DropdownMenuItem
-                    className="text-gray-600 dark:text-gray-400 cursor-pointer"
-                    onClick={() => window.open(`${authUrl}/organizations`, "_blank")}
-                  >
-                    Manage organizations <ExternalLink className="w-4 h-4" />
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem disabled={true} className="cursor-pointer" onClick={handleSignOut}>
+                  <DropdownMenuItem className="cursor-pointer" onClick={handleSignOut}>
                     <span className="text-destructive font-semibold">Log out</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+            ) : (
+              <button onClick={handleSignIn} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition">
+                <LogIn className="h-4 w-4" />
+                <span>Sign in</span>
+              </button>
             )}
           </div>
         </div>
