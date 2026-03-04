@@ -1,4 +1,4 @@
-import { queryInternalDatabase } from '@/server-lib/internal-db-query';
+import { sql } from '@/server-lib/neon';
 import { NextResponse } from 'next/server';
 import type { KitchenSettings } from '@/shared/models/breakfast';
 
@@ -18,10 +18,10 @@ const DISPLAY_HOURS = {
 
 export async function GET() {
   try {
-    const rows = await queryInternalDatabase(
-      'SELECT key, value FROM kitchen_settings WHERE key IN ($1, $2, $3)',
-      ['service_days', 'service_start_hour', 'service_end_hour']
-    ) as unknown as Array<{ key: string; value: string }>;
+    const rows = await sql`
+      SELECT key, value FROM kitchen_settings 
+      WHERE key IN ('service_days', 'service_start_hour', 'service_end_hour')
+    ` as unknown as Array<{ key: string; value: string }>;
 
     const settingsMap = new Map(rows.map(r => [r.key, r.value]));
 
@@ -71,10 +71,11 @@ export async function PATCH(request: Request) {
         }
       }
       // Use upsert: insert or update based on conflict
-      await queryInternalDatabase(
-        'INSERT INTO kitchen_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value',
-        ['service_days', JSON.stringify(service_days)]
-      );
+      await sql`
+        INSERT INTO kitchen_settings (key, value) 
+        VALUES ('service_days', ${JSON.stringify(service_days)})
+        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+      `;
     }
 
     if (service_start_hour !== undefined) {
@@ -82,10 +83,11 @@ export async function PATCH(request: Request) {
       if (isNaN(hour) || hour < 0 || hour > 23) {
         return NextResponse.json({ error: 'Invalid start hour' }, { status: 400 });
       }
-      await queryInternalDatabase(
-        'INSERT INTO kitchen_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value',
-        ['service_start_hour', String(hour)]
-      );
+      await sql`
+        INSERT INTO kitchen_settings (key, value) 
+        VALUES ('service_start_hour', ${String(hour)})
+        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+      `;
     }
 
     if (service_end_hour !== undefined) {
@@ -93,17 +95,18 @@ export async function PATCH(request: Request) {
       if (isNaN(hour) || hour < 0 || hour > 23) {
         return NextResponse.json({ error: 'Invalid end hour' }, { status: 400 });
       }
-      await queryInternalDatabase(
-        'INSERT INTO kitchen_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value',
-        ['service_end_hour', String(hour)]
-      );
+      await sql`
+        INSERT INTO kitchen_settings (key, value) 
+        VALUES ('service_end_hour', ${String(hour)})
+        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+      `;
     }
 
     // Return updated settings
-    const rows = await queryInternalDatabase(
-      'SELECT key, value FROM kitchen_settings WHERE key IN ($1, $2, $3)',
-      ['service_days', 'service_start_hour', 'service_end_hour']
-    ) as unknown as Array<{ key: string; value: string }>;
+    const rows = await sql`
+      SELECT key, value FROM kitchen_settings 
+      WHERE key IN ('service_days', 'service_start_hour', 'service_end_hour')
+    ` as unknown as Array<{ key: string; value: string }>;
 
     const settingsMap = new Map(rows.map(r => [r.key, r.value]));
 
