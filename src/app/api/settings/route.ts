@@ -70,8 +70,9 @@ export async function PATCH(request: Request) {
           return NextResponse.json({ error: `Invalid day: ${day}` }, { status: 400 });
         }
       }
+      // Use upsert: insert or update based on conflict
       await queryInternalDatabase(
-        'INSERT INTO kitchen_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()',
+        'INSERT INTO kitchen_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value',
         ['service_days', JSON.stringify(service_days)]
       );
     }
@@ -82,7 +83,7 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ error: 'Invalid start hour' }, { status: 400 });
       }
       await queryInternalDatabase(
-        'INSERT INTO kitchen_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()',
+        'INSERT INTO kitchen_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value',
         ['service_start_hour', String(hour)]
       );
     }
@@ -93,7 +94,7 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ error: 'Invalid end hour' }, { status: 400 });
       }
       await queryInternalDatabase(
-        'INSERT INTO kitchen_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()',
+        'INSERT INTO kitchen_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value',
         ['service_end_hour', String(hour)]
       );
     }

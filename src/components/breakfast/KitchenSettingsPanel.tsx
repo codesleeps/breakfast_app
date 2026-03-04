@@ -28,7 +28,7 @@ const ALL_DAYS = [
   { key: "sunday", label: "Sun" },
 ];
 
-const HOUR_OPTIONS = Array.from({ length: 7 }, (_, i) => i + 6); // 6am to 12pm
+const HOUR_OPTIONS = Array.from({ length: 8 }, (_, i) => i + 6); // 6am to 1pm
 
 export function KitchenSettingsPanel() {
   const { data: settings, isLoading } = useSettings();
