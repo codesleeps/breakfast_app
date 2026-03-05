@@ -1,8 +1,8 @@
 {
   "redirects": [
     {
-      "source": "/((?!_next/static|_next/image|favicon.ico).*)",
-      "destination": "https://astonbreakfastclub.com/$1",
+      "source": "/",
+      "destination": "https://astonbreakfastclub.com/",
       "permanent": false,
       "has": [
         {
