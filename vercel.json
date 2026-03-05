@@ -1,13 +1,13 @@
 {
   "redirects": [
     {
-      "source": "/:path*",
-      "destination": "https://astonbreakfastclub.com/:path*",
+      "source": "/:path(.*)",
+      "destination": "https://astonbreakfastclub.com/:path",
       "permanent": true,
       "has": [
         {
           "type": "host",
-          "value": ".*\\.vercel\\.app"
+          "value": "(?:.*\\.)?vercel\\.app"
         }
       ]
     }
