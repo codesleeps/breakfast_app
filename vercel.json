@@ -1,1 +1,15 @@
-{}
+{
+  "redirects": [
+    {
+      "source": "/((?!_next/static|_next/image|favicon.ico).*)",
+      "destination": "https://astonbreakfastclub.com/$1",
+      "permanent": false,
+      "has": [
+        {
+          "type": "host",
+          "value": ".*\\.vercel\\.app"
+        }
+      ]
+    }
+  ]
+}
