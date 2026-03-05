@@ -16,7 +16,7 @@ const DEMO_MENU_ITEMS = new Map([
   // Main dishes - Hot
   ['1', { id: '1', name: 'Kitchen Special', price_pence: 500, available: true, prep_time_minutes: 12 }],
   ['2', { id: '2', name: 'Scrambled Eggs with Flatbread', price_pence: 300, available: true, prep_time_minutes: 8 }],
-  ['3', { id: '3', name: 'Bacon Flatbread', price_pence: 350, available: true, prep_time_minutes: 6 }],
+  ['3', { id: '3', name: 'Turkey Rashers', price_pence: 350, available: true, prep_time_minutes: 6 }],
   ['4', { id: '4', name: 'Poached Eggs with Flatbread', price_pence: 300, available: true, prep_time_minutes: 10 }],
   // Main dishes - Light
   ['5', { id: '5', name: 'Spicy Flatbread', price_pence: 400, available: true, prep_time_minutes: 8 }],

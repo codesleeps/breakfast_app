@@ -6,7 +6,7 @@ const MOCK_MENU_ITEMS = [
   // Main dishes - Hot
   { id: '1', name: 'Kitchen Special', description: '2 x fried eggs, 4 x fish fingers, baked beans, fried plantains and 3 x fried dumplings', price_pence: 500, category: 'Hot', image_url: '/kitchen_special.jpg', available: true, sort_order: 1, is_extra: false },
   { id: '2', name: 'Scrambled Eggs with Flatbread', description: 'Fluffy scrambled eggs, tomatoes and cheese served with homemade flatbread', price_pence: 300, category: 'Hot', image_url: '/flatbread-scramble-eggs-2100x963.jpg', available: true, sort_order: 2, is_extra: false },
-  { id: '3', name: 'Bacon Flatbread', description: 'Crispy bacon tomatoes onions in a fresh homemade flatbread', price_pence: 350, category: 'Hot', image_url: '/breakfast-flatbreads.png', available: true, sort_order: 3, is_extra: false },
+  { id: '3', name: 'Turkey Rashers', description: 'Crispy turkey rashers tomatoes onions in a fresh homemade flatbread', price_pence: 350, category: 'Hot', image_url: '/breakfast-flatbreads.png', available: true, sort_order: 3, is_extra: false },
   { id: '4', name: 'Poached Eggs with Flatbread', description: 'Perfectly poached eggs served with broccoli tomatoes homemade wholemeal flatbread', price_pence: 300, category: 'Hot', image_url: '/Poached-Eggs-with-Broccoli-Tomatoes-Wholemeal-Flatbread-Recipe-munchiie.com_.jpg', available: true, sort_order: 4, is_extra: false },
   // Main dishes - Light
   { id: '5', name: 'Spicy Flatbread', description: 'Homemade flatbread filled with spicy ground chicken, onions and peppers topped with cheese and salad', price_pence: 400, category: 'Light', image_url: '/open_flatbread.jpg', available: true, sort_order: 5, is_extra: false },
